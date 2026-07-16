@@ -23,16 +23,40 @@ export default function App() {
   const [allRawData, setAllRawData] = useState({ transactions: [], securityData: [] });
   const [assessments, setAssessments] = useState([]);
   const [selectedTxnId, setSelectedTxnId] = useState('');
+  const [dbStatus, setDbStatus] = useState({ connected: false, database: "", error: "Checking status..." });
   
   // API Key state for local override
   const [showSettings, setShowSettings] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [isLiveAi, setIsLiveAi] = useState(false);
 
-  // Initialize mock data on mount
+  // Initialize data on mount (query Express server or fallback to mock)
   useEffect(() => {
-    const mock = generateMockData();
-    setAllRawData(mock);
+    const loadInitialData = async () => {
+      try {
+        const statusRes = await fetch('/api/db-status');
+        const statusData = await statusRes.json();
+        setDbStatus(statusData);
+
+        const tRes = await fetch('/api/transactions');
+        const sRes = await fetch('/api/securityData');
+        const transactions = await tRes.json();
+        const securityData = await sRes.json();
+
+        setAllRawData({ transactions, securityData });
+      } catch (err) {
+        console.warn("Express backend server offline. Reverting to local frontend simulation mode:", err);
+        const mock = generateMockData();
+        setAllRawData(mock);
+        setDbStatus({
+          connected: false,
+          database: "Local Memory",
+          error: "Backend server offline. Reverted to client-side heuristics."
+        });
+      }
+    };
+
+    loadInitialData();
     
     // Check key status
     setIsLiveAi(isAiActive());
@@ -67,7 +91,7 @@ export default function App() {
     setPage('soc_portal');
   };
 
-  const handleDataCorrelated = (transactions, securityData) => {
+  const handleDataCorrelated = async (transactions, securityData) => {
     // Keep reference of current parsed data
     setAllRawData({ transactions, securityData });
     
@@ -76,6 +100,19 @@ export default function App() {
     if (correlated.length > 0) {
       const sorted = [...correlated].sort((a, b) => b.riskScore - a.riskScore);
       setSelectedTxnId(sorted[0].transactionId);
+    }
+
+    try {
+      await fetch('/api/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactions, securityData })
+      });
+      const statusRes = await fetch('/api/db-status');
+      const statusData = await statusRes.json();
+      setDbStatus(statusData);
+    } catch (e) {
+      console.warn("Failed to synchronize ingested data with backend database: ", e);
     }
   };
 
@@ -197,6 +234,19 @@ export default function App() {
           >
             <Grid size={13} /> Change Branch
           </button>
+
+          {/* Database Connection Badge */}
+          {dbStatus.connected ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--color-success)', background: '#d1fae5', padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #a7f3d0', fontWeight: 700 }} title="Atlas Cluster Connected">
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              <span>MONGODB ONLINE</span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: '#64748b', background: '#f1f5f9', padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontWeight: 700 }} title={dbStatus.error || "Using local in-memory dataset"}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#64748b', display: 'inline-block' }} />
+              <span>DB FALLBACK (SIM)</span>
+            </div>
+          )}
 
           {isLiveAi ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--color-success)', background: '#d1fae5', padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #a7f3d0', fontWeight: 700 }}>
