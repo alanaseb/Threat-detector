@@ -14,7 +14,7 @@ app.use(express.json({ limit: '10mb' }));
 
 const PORT = 3001;
 const MONGO_URI = "mongodb+srv://pranethipranethi17_db_user:sOSXhisPDWQE8Xz6@cluster0.cwteyxc.mongodb.net/";
-const DB_NAME = "threat_detection";
+const DB_NAME = "finspark";
 
 let db = null;
 let client = null;
