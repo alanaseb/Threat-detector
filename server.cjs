@@ -109,7 +109,7 @@ let memoryProfiles = [...SEED_PROFILES];
 async function connectToMongo() {
   try {
     console.log("Connecting to MongoDB Atlas Cluster...");
-    client = new MongoClient(MONGO_URI);
+    client = new MongoClient(MONGO_URI, { serverSelectionTimeoutMS: 2000, connectTimeoutMS: 2000 });
     await client.connect();
     
     db = client.db(DB_NAME);
@@ -166,7 +166,7 @@ app.get('/api/transactions', async (req, res) => {
       const data = await db.collection("transactions").find({}).toArray();
       return res.json(data);
     } catch (e) {
-      console.error("Error reading transactions from MongoDB:", e);
+      console.error("Error reading transactions from MongoDB (falling back to memory):", e.message);
     }
   }
   res.json(memoryTransactions);
@@ -179,7 +179,7 @@ app.get('/api/securityData', async (req, res) => {
       const data = await db.collection("security_data").find({}).toArray();
       return res.json(data);
     } catch (e) {
-      console.error("Error reading security data from MongoDB:", e);
+      console.error("Error reading security data from MongoDB (falling back to memory):", e.message);
     }
   }
   res.json(memorySecurityData);
@@ -192,7 +192,7 @@ app.get('/api/userProfiles', async (req, res) => {
       const data = await db.collection("user_profiles").find({}).toArray();
       return res.json(data);
     } catch (e) {
-      console.error("Error reading user profiles from MongoDB:", e);
+      console.error("Error reading user profiles from MongoDB (falling back to memory):", e.message);
     }
   }
   res.json(memoryProfiles);
