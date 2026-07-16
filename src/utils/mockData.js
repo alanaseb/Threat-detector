@@ -1,289 +1,179 @@
-// Mock Data Generator for Quantum Sentinel AI
+// Mock Data for Bank of Maharashtra threat correlation
 
-// Predefined trusted profiles for users to establish baseline UEBA behavior
 export const USER_PROFILES = {
-  "USR-101": {
-    userId: "USR-101",
-    name: "Alana Vance",
-    role: "System Administrator", // Privileged user for Insider Threat demo
-    normalDevice: "Windows 11 PC (Chrome)",
-    normalIp: "198.51.100.12",
-    normalLocation: "United States (New York)",
-    avgTransactionAmount: 450.00,
-    typicalLoginTime: "08:00 - 18:00",
-    isPrivileged: true
+  "U101": {
+    userId: "U101",
+    name: "Rahul Sharma",
+    normalDevice: "Windows PC",
+    normalLocation: "Coimbatore",
+    accountNumber: "8778 9328 7921 7421",
+    ifsc: "651",
+    accountType: "Savings",
+    avgAmount: 2800.00
   },
-  "USR-102": {
-    userId: "USR-102",
-    name: "Marcus Chen",
-    role: "Retail Customer",
-    normalDevice: "Apple iPhone 15 (Safari)",
-    normalIp: "203.0.113.84",
-    normalLocation: "Canada (Toronto)",
-    avgTransactionAmount: 85.50,
-    typicalLoginTime: "07:00 - 23:00",
-    isPrivileged: false
+  "U102": {
+    userId: "U102",
+    name: "Priya Nair",
+    normalDevice: "Windows PC",
+    normalLocation: "Chennai",
+    accountNumber: "9290 8100 3390 7579",
+    ifsc: "962",
+    accountType: "Savings",
+    avgAmount: 2300.00
   },
-  "USR-103": {
-    userId: "USR-103",
-    name: "Elena Rostova",
-    role: "Commercial Client Manager",
-    normalDevice: "MacBook Pro (Firefox)",
-    normalIp: "185.190.140.23",
-    normalLocation: "Germany (Frankfurt)",
-    avgTransactionAmount: 3200.00,
-    typicalLoginTime: "09:00 - 17:00",
-    isPrivileged: true
+  "U103": {
+    userId: "U103",
+    name: "Arun Kumar",
+    normalDevice: "iPhone",
+    normalLocation: "Chennai",
+    accountNumber: "4701 7468 1453 8401",
+    ifsc: "676",
+    accountType: "Savings",
+    avgAmount: 1750.00
   },
-  "USR-104": {
-    userId: "USR-104",
-    name: "David Kojo",
-    role: "Retail Customer",
-    normalDevice: "Samsung Galaxy S24 (Chrome)",
-    normalIp: "41.210.15.6",
-    normalLocation: "Ghana (Accra)",
-    avgTransactionAmount: 120.00,
-    typicalLoginTime: "06:00 - 22:00",
-    isPrivileged: false
+  "U104": {
+    userId: "U104",
+    name: "Sneha Reddy",
+    normalDevice: "Laptop",
+    normalLocation: "Chennai",
+    accountNumber: "6100 3307 6661 9345",
+    ifsc: "189",
+    accountType: "Current",
+    avgAmount: 2600.00
   },
-  "USR-105": {
-    userId: "USR-105",
-    name: "Sarah Jenkins",
-    role: "Retail Customer",
-    normalDevice: "Dell XPS 13 (Edge)",
-    normalIp: "93.184.216.34",
-    normalLocation: "United Kingdom (London)",
-    avgTransactionAmount: 210.00,
-    typicalLoginTime: "07:00 - 22:00",
-    isPrivileged: false
+  "U105": {
+    userId: "U105",
+    name: "Vikram Singh",
+    normalDevice: "Android",
+    normalLocation: "Coimbatore",
+    accountNumber: "1231 0077 2837 8326",
+    ifsc: "759",
+    accountType: "Current",
+    avgAmount: 2400.00
+  },
+  "U106": {
+    userId: "U106",
+    name: "Ananya Iyer",
+    normalDevice: "MacBook",
+    normalLocation: "Chennai",
+    accountNumber: "9081 7263 5410 2938",
+    ifsc: "452",
+    accountType: "Current",
+    avgAmount: 2600.00
+  },
+  "U107": {
+    userId: "U107",
+    name: "Karthik Rajan",
+    normalDevice: "MacBook",
+    normalLocation: "Chennai",
+    accountNumber: "9081 7263 5410 2938",
+    ifsc: "452",
+    accountType: "Current",
+    avgAmount: 2600.00
   }
 };
 
-// Generates baseline mock databases: Transactions, Logins, and Security Events
+// Generates the two split datasets: Transaction Data and Security Data
 export function generateMockData() {
-  const transactions = [];
-  const logins = [];
-  const securityEvents = [];
-
-  const addNormalTransaction = (userId, txnId, amount, country, device, ip, hoursAgo) => {
-    const time = new Date(Date.now() - hoursAgo * 3600000);
-    const timeStr = time.toISOString().replace('T', ' ').substring(0, 19);
+  // 1. Transaction dataset: transaction-specific values
+  const transactions = [
+    // Rahul Sharma U101
+    { Customer_ID: "U101", Transaction_ID: "TXN3001", Account_Holder_Name: "Rahul Sharma", Account_Number: "8778 9328 7921 7421", IFSC_Code: "651", Account_Type: "Savings", Transaction_Type: "Grocery", Transaction_Amount: "2300", Transaction_Status: "Completed" },
+    { Customer_ID: "U101", Transaction_ID: "TXN3002", Account_Holder_Name: "Rahul Sharma", Account_Number: "8778 9328 7921 7421", IFSC_Code: "651", Account_Type: "Savings", Transaction_Type: "Grocery", Transaction_Amount: "3200", Transaction_Status: "Completed" },
+    { Customer_ID: "U101", Transaction_ID: "TXN3003", Account_Holder_Name: "Rahul Sharma", Account_Number: "8778 9328 7921 7421", IFSC_Code: "651", Account_Type: "Savings", Transaction_Type: "Fuel", Transaction_Amount: "1200", Transaction_Status: "Completed" },
+    { Customer_ID: "U101", Transaction_ID: "TXN3004", Account_Holder_Name: "Rahul Sharma", Account_Number: "8778 9328 7921 7421", IFSC_Code: "651", Account_Type: "Savings", Transaction_Type: "Bill Payment", Transaction_Amount: "4500", Transaction_Status: "Completed" },
+    { Customer_ID: "U101", Transaction_ID: "TXN3005", Account_Holder_Name: "Rahul Sharma", Account_Number: "8778 9328 7921 7421", IFSC_Code: "651", Account_Type: "Savings", Transaction_Type: "IMPS - Unknown Beneficiary", Transaction_Amount: "185000", Transaction_Status: "Failed" },
     
-    // Add success login
-    logins.push({
-      loginId: `LOG-${1000 + logins.length}`,
-      userId,
-      timestamp: new Date(time.getTime() - 5 * 60000).toISOString().replace('T', ' ').substring(0, 19),
-      ipAddress: ip,
-      device,
-      country,
-      status: "SUCCESS",
-      failedAttemptsBeforeSuccess: 0
-    });
+    // Priya Nair U102
+    { Customer_ID: "U102", Transaction_ID: "TXN3006", Account_Holder_Name: "Priya Nair", Account_Number: "9290 8100 3390 7579", IFSC_Code: "962", Account_Type: "Savings", Transaction_Type: "Shopping", Transaction_Amount: "4500", Transaction_Status: "Completed" },
+    { Customer_ID: "U102", Transaction_ID: "TXN3007", Account_Holder_Name: "Priya Nair", Account_Number: "9290 8100 3390 7579", IFSC_Code: "962", Account_Type: "Savings", Transaction_Type: "Bill Payment", Transaction_Amount: "2300", Transaction_Status: "Completed" },
+    { Customer_ID: "U102", Transaction_ID: "TXN3008", Account_Holder_Name: "Priya Nair", Account_Number: "9290 8100 3390 7579", IFSC_Code: "962", Account_Type: "Savings", Transaction_Type: "Fuel", Transaction_Amount: "1200", Transaction_Status: "Completed" },
+    { Customer_ID: "U102", Transaction_ID: "TXN3009", Account_Holder_Name: "Priya Nair", Account_Number: "9290 8100 3390 7579", IFSC_Code: "962", Account_Type: "Savings", Transaction_Type: "Fuel", Transaction_Amount: "1200", Transaction_Status: "Completed" },
+    { Customer_ID: "U102", Transaction_ID: "TXN3010", Account_Holder_Name: "Priya Nair", Account_Number: "9290 8100 3390 7579", IFSC_Code: "962", Account_Type: "Savings", Transaction_Type: "IMPS - Unknown Beneficiary", Transaction_Amount: "185000", Transaction_Status: "Failed" },
 
-    transactions.push({
-      transactionId: txnId,
-      userId,
-      timestamp: timeStr,
-      amount,
-      merchant: "SafeMerchant Store",
-      status: "COMPLETED",
-      device,
-      ipAddress: ip,
-      country
-    });
-  };
+    // Arun Kumar U103
+    { Customer_ID: "U103", Transaction_ID: "TXN3011", Account_Holder_Name: "Arun Kumar", Account_Number: "4701 7468 1453 8401", IFSC_Code: "676", Account_Type: "Savings", Transaction_Type: "Shopping", Transaction_Amount: "1200", Transaction_Status: "Completed" },
+    { Customer_ID: "U103", Transaction_ID: "TXN3012", Account_Holder_Name: "Arun Kumar", Account_Number: "4701 7468 1453 8401", IFSC_Code: "676", Account_Type: "Savings", Transaction_Type: "Shopping", Transaction_Amount: "1750", Transaction_Status: "Completed" },
+    { Customer_ID: "U103", Transaction_ID: "TXN3013", Account_Holder_Name: "Arun Kumar", Account_Number: "4701 7468 1453 8401", IFSC_Code: "676", Account_Type: "Savings", Transaction_Type: "Grocery", Transaction_Amount: "3200", Transaction_Status: "Completed" },
+    { Customer_ID: "U103", Transaction_ID: "TXN3014", Account_Holder_Name: "Arun Kumar", Account_Number: "4701 7468 1453 8401", IFSC_Code: "676", Account_Type: "Savings", Transaction_Type: "Grocery", Transaction_Amount: "850", Transaction_Status: "Completed" },
+    { Customer_ID: "U103", Transaction_ID: "TXN3015", Account_Holder_Name: "Arun Kumar", Account_Number: "4701 7468 1453 8401", IFSC_Code: "676", Account_Type: "Savings", Transaction_Type: "IMPS - Unknown Beneficiary", Transaction_Amount: "420000", Transaction_Status: "Failed" },
 
-  // 1. Populate normal baseline data
-  addNormalTransaction("USR-101", "TXN-1001", 120.00, "United States (New York)", "Windows 11 PC (Chrome)", "198.51.100.12", 24);
-  addNormalTransaction("USR-101", "TXN-1002", 55.40, "United States (New York)", "Windows 11 PC (Chrome)", "198.51.100.12", 20);
-  addNormalTransaction("USR-102", "TXN-1003", 42.00, "Canada (Toronto)", "Apple iPhone 15 (Safari)", "203.0.113.84", 18);
-  addNormalTransaction("USR-102", "TXN-1004", 112.50, "Canada (Toronto)", "Apple iPhone 15 (Safari)", "203.0.113.84", 15);
-  addNormalTransaction("USR-103", "TXN-1005", 2800.00, "Germany (Frankfurt)", "MacBook Pro (Firefox)", "185.190.140.23", 12);
-  addNormalTransaction("USR-104", "TXN-1006", 15.99, "Ghana (Accra)", "Samsung Galaxy S24 (Chrome)", "41.210.15.6", 8);
-  addNormalTransaction("USR-105", "TXN-1007", 340.00, "United Kingdom (London)", "Dell XPS 13 (Edge)", "93.184.216.34", 6);
+    // Sneha Reddy U104
+    { Customer_ID: "U104", Transaction_ID: "TXN3016", Account_Holder_Name: "Sneha Reddy", Account_Number: "6100 3307 6661 9345", IFSC_Code: "189", Account_Type: "Current", Transaction_Type: "Fuel", Transaction_Amount: "2300", Transaction_Status: "Completed" },
+    { Customer_ID: "U104", Transaction_ID: "TXN3017", Account_Holder_Name: "Sneha Reddy", Account_Number: "6100 3307 6661 9345", IFSC_Code: "189", Account_Type: "Current", Transaction_Type: "Bill Payment", Transaction_Amount: "3200", Transaction_Status: "Completed" },
+    { Customer_ID: "U104", Transaction_ID: "TXN3018", Account_Holder_Name: "Sneha Reddy", Account_Number: "6100 3307 6661 9345", IFSC_Code: "189", Account_Type: "Current", Transaction_Type: "Grocery", Transaction_Amount: "1750", Transaction_Status: "Completed" },
+    { Customer_ID: "U104", Transaction_ID: "TXN3019", Account_Holder_Name: "Sneha Reddy", Account_Number: "6100 3307 6661 9345", IFSC_Code: "189", Account_Type: "Current", Transaction_Type: "Grocery", Transaction_Amount: "3200", Transaction_Status: "Completed" },
 
-  // 2. Scenario A: Account Takeover (ATO) with Impossible Travel (High/Critical Risk)
-  // User 102 (Marcus Chen) usually in Canada. 
-  // Let's simulate a login from Canada, and 10 mins later a login & transaction from Russia/Germany.
-  const timeA = new Date(Date.now() - 4 * 3600000); // 4 hours ago
-  
-  // Legitimate login in Canada
-  logins.push({
-    loginId: "LOG-1008",
-    userId: "USR-102",
-    timestamp: new Date(timeA.getTime() - 15 * 60000).toISOString().replace('T', ' ').substring(0, 19),
-    ipAddress: "203.0.113.84",
-    device: "Apple iPhone 15 (Safari)",
-    country: "Canada (Toronto)",
-    status: "SUCCESS",
-    failedAttemptsBeforeSuccess: 0
-  });
+    // Vikram Singh U105
+    { Customer_ID: "U105", Transaction_ID: "TXN3020", Account_Holder_Name: "Vikram Singh", Account_Number: "1231 0077 2837 8326", IFSC_Code: "759", Account_Type: "Current", Transaction_Type: "Grocery", Transaction_Amount: "1200", Transaction_Status: "Completed" },
+    { Customer_ID: "U105", Transaction_ID: "TXN3021", Account_Holder_Name: "Vikram Singh", Account_Number: "1231 0077 2837 8326", IFSC_Code: "759", Account_Type: "Current", Transaction_Type: "Fuel", Transaction_Amount: "3200", Transaction_Status: "Completed" },
+    { Customer_ID: "U105", Transaction_ID: "TXN3022", Account_Holder_Name: "Vikram Singh", Account_Number: "1231 0077 2837 8326", IFSC_Code: "759", Account_Type: "Current", Transaction_Type: "Shopping", Transaction_Amount: "850", Transaction_Status: "Completed" },
+    { Customer_ID: "U105", Transaction_ID: "TXN3023", Account_Holder_Name: "Vikram Singh", Account_Number: "1231 0077 2837 8326", IFSC_Code: "759", Account_Type: "Current", Transaction_Type: "Shopping", Transaction_Amount: "4500", Transaction_Status: "Completed" },
 
-  // Suspect login 10 minutes later in India
-  const timeSuspectA = new Date(timeA.getTime() - 5 * 60000);
-  logins.push({
-    loginId: "LOG-1009",
-    userId: "USR-102",
-    timestamp: timeSuspectA.toISOString().replace('T', ' ').substring(0, 19),
-    ipAddress: "103.241.12.89",
-    device: "Linux Operating System (Firefox Mobile)", // Device change
-    country: "India (Mumbai)",
-    status: "SUCCESS",
-    failedAttemptsBeforeSuccess: 0
-  });
+    // Ananya Iyer U106
+    { Customer_ID: "U106", Transaction_ID: "TXN3024", Account_Holder_Name: "Ananya Iyer", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Transaction_Type: "Grocery", Transaction_Amount: "1500", Transaction_Status: "Completed" },
+    { Customer_ID: "U106", Transaction_ID: "TXN3025", Account_Holder_Name: "Ananya Iyer", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Transaction_Type: "Utility Bill", Transaction_Amount: "2750", Transaction_Status: "Completed" },
+    { Customer_ID: "U106", Transaction_ID: "TXN3026", Account_Holder_Name: "Ananya Iyer", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Transaction_Type: "Shopping", Transaction_Amount: "5200", Transaction_Status: "Completed" },
+    { Customer_ID: "U106", Transaction_ID: "TXN3027", Account_Holder_Name: "Ananya Iyer", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Transaction_Type: "Fuel", Transaction_Amount: "980", Transaction_Status: "Completed" },
 
-  transactions.push({
-    transactionId: "TXN-2001",
-    userId: "USR-102",
-    timestamp: timeA.toISOString().replace('T', ' ').substring(0, 19),
-    amount: 9800.00, // High Amount for this user (avg is $85)
-    merchant: "Global Crypto Exchange LLC",
-    status: "PENDING_BLOCK",
-    device: "Linux Operating System (Firefox Mobile)",
-    ipAddress: "103.241.12.89",
-    country: "India (Mumbai)"
-  });
+    // Karthik Rajan U107
+    { Customer_ID: "U107", Transaction_ID: "TXN3028", Account_Holder_Name: "Karthik Rajan", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Transaction_Type: "Grocery", Transaction_Amount: "1500", Transaction_Status: "Completed" },
+    { Customer_ID: "U107", Transaction_ID: "TXN3029", Account_Holder_Name: "Karthik Rajan", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Transaction_Type: "Utility Bill", Transaction_Amount: "2750", Transaction_Status: "Completed" },
+    { Customer_ID: "U107", Transaction_ID: "TXN3030", Account_Holder_Name: "Karthik Rajan", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Transaction_Type: "Shopping", Transaction_Amount: "5200", Transaction_Status: "Completed" },
+    { Customer_ID: "U107", Transaction_ID: "TXN3031", Account_Holder_Name: "Karthik Rajan", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Transaction_Type: "Fuel", Transaction_Amount: "980", Transaction_Status: "Completed" }
+  ];
 
-  securityEvents.push({
-    eventId: "SEC-3001",
-    userId: "USR-102",
-    timestamp: timeSuspectA.toISOString().replace('T', ' ').substring(0, 19),
-    eventType: "IMP_TRAVEL_DETECTED",
-    severity: "HIGH",
-    description: "User session relocated from Canada to India in 10 minutes (Required speed > 9000 km/h)."
-  });
+  // 2. Security dataset: login, device, network parameters
+  const securityData = [
+    // Rahul Sharma U101
+    { Customer_ID: "U101", Transaction_ID: "TXN3001", Login_Date: "01-07-2026", Login_Time: "18:13", Location: "Coimbatore", Device_Information: "Windows PC", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U101", Transaction_ID: "TXN3002", Login_Date: "03-07-2026", Login_Time: "11:02", Location: "Coimbatore", Device_Information: "Windows PC", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U101", Transaction_ID: "TXN3003", Login_Date: "05-07-2026", Login_Time: "11:16", Location: "Coimbatore", Device_Information: "Windows PC", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U101", Transaction_ID: "TXN3004", Login_Date: "07-07-2026", Login_Time: "09:53", Location: "Coimbatore", Device_Information: "Windows PC", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U101", Transaction_ID: "TXN3005", Login_Date: "09-07-2026", Login_Time: "01:05", Location: "Lagos", Device_Information: "iPhone", VPN_Used: "Yes", Firewall_Alert: "Yes" },
+    
+    // Priya Nair U102
+    { Customer_ID: "U102", Transaction_ID: "TXN3006", Login_Date: "01-07-2026", Login_Time: "12:00", Location: "Chennai", Device_Information: "Windows PC", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U102", Transaction_ID: "TXN3007", Login_Date: "03-07-2026", Login_Time: "18:39", Location: "Chennai", Device_Information: "Windows PC", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U102", Transaction_ID: "TXN3008", Login_Date: "05-07-2026", Login_Time: "16:53", Location: "Chennai", Device_Information: "Windows PC", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U102", Transaction_ID: "TXN3009", Login_Date: "07-07-2026", Login_Time: "18:11", Location: "Chennai", Device_Information: "Windows PC", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U102", Transaction_ID: "TXN3010", Login_Date: "09-07-2026", Login_Time: "03:52", Location: "Minsk", Device_Information: "MacBook", VPN_Used: "Yes", Firewall_Alert: "Yes" },
 
+    // Arun Kumar U103
+    { Customer_ID: "U103", Transaction_ID: "TXN3011", Login_Date: "01-07-2026", Login_Time: "18:10", Location: "Chennai", Device_Information: "iPhone", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U103", Transaction_ID: "TXN3012", Login_Date: "03-07-2026", Login_Time: "20:43", Location: "Chennai", Device_Information: "iPhone", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U103", Transaction_ID: "TXN3013", Login_Date: "05-07-2026", Login_Time: "15:26", Location: "Chennai", Device_Information: "iPhone", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U103", Transaction_ID: "TXN3014", Login_Date: "07-07-2026", Login_Time: "09:02", Location: "Chennai", Device_Information: "iPhone", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U103", Transaction_ID: "TXN3015", Login_Date: "09-07-2026", Login_Time: "02:45", Location: "Minsk", Device_Information: "Laptop", VPN_Used: "Yes", Firewall_Alert: "Yes" },
 
-  // 3. Scenario B: Brute Force Attack (Medium/High Risk)
-  // User 104 (David Kojo) experiences brute-force attempts on Samsung/Ghana baseline.
-  const timeB = new Date(Date.now() - 3 * 3600000); // 3 hours ago
-  
-  // 4 Failed login attempts
-  for (let i = 1; i <= 4; i++) {
-    logins.push({
-      loginId: `LOG-BF-${i}`,
-      userId: "USR-104",
-      timestamp: new Date(timeB.getTime() - (15 - i) * 60000).toISOString().replace('T', ' ').substring(0, 19),
-      ipAddress: "197.255.195.42", // Different IP
-      device: "Samsung Galaxy S24 (Chrome)",
-      country: "Ghana (Accra)",
-      status: "FAILED",
-      failedAttemptsBeforeSuccess: i
-    });
-  }
+    // Sneha Reddy U104
+    { Customer_ID: "U104", Transaction_ID: "TXN3016", Login_Date: "01-07-2026", Login_Time: "15:52", Location: "Chennai", Device_Information: "Laptop", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U104", Transaction_ID: "TXN3017", Login_Date: "03-07-2026", Login_Time: "18:33", Location: "Chennai", Device_Information: "Laptop", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U104", Transaction_ID: "TXN3018", Login_Date: "05-07-2026", Login_Time: "11:08", Location: "Chennai", Device_Information: "Laptop", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U104", Transaction_ID: "TXN3019", Login_Date: "07-07-2026", Login_Time: "12:17", Location: "Chennai", Device_Information: "Laptop", VPN_Used: "No", Firewall_Alert: "No" },
 
-  // 1 Successful login
-  logins.push({
-    loginId: "LOG-1010",
-    userId: "USR-104",
-    timestamp: new Date(timeB.getTime() - 2 * 60000).toISOString().replace('T', ' ').substring(0, 19),
-    ipAddress: "197.255.195.42",
-    device: "Samsung Galaxy S24 (Chrome)",
-    country: "Ghana (Accra)",
-    status: "SUCCESS",
-    failedAttemptsBeforeSuccess: 4
-  });
+    // Vikram Singh U105
+    { Customer_ID: "U105", Transaction_ID: "TXN3020", Login_Date: "01-07-2026", Login_Time: "12:04", Location: "Coimbatore", Device_Information: "Android", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U105", Transaction_ID: "TXN3021", Login_Date: "03-07-2026", Login_Time: "13:15", Location: "Coimbatore", Device_Information: "Android", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U105", Transaction_ID: "TXN3022", Login_Date: "05-07-2026", Login_Time: "09:18", Location: "Coimbatore", Device_Information: "Android", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U105", Transaction_ID: "TXN3023", Login_Date: "07-07-2026", Login_Time: "14:05", Location: "Coimbatore", Device_Information: "Android", VPN_Used: "No", Firewall_Alert: "No" },
 
-  transactions.push({
-    transactionId: "TXN-2002",
-    userId: "USR-104",
-    timestamp: timeB.toISOString().replace('T', ' ').substring(0, 19),
-    amount: 950.00, // Higher than normal
-    merchant: "Prepaid GiftCards Online",
-    status: "FLAGGED_MFA",
-    device: "Samsung Galaxy S24 (Chrome)",
-    ipAddress: "197.255.195.42",
-    country: "Ghana (Accra)"
-  });
+    // Ananya Iyer U106
+    { Customer_ID: "U106", Transaction_ID: "TXN3024", Login_Date: "01-07-2026", Login_Time: "10:51", Location: "Chennai", Device_Information: "MacBook", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U106", Transaction_ID: "TXN3025", Login_Date: "03-07-2026", Login_Time: "14:40", Location: "Chennai", Device_Information: "MacBook", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U106", Transaction_ID: "TXN3026", Login_Date: "05-07-2026", Login_Time: "17:32", Location: "Chennai", Device_Information: "MacBook", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U106", Transaction_ID: "TXN3027", Login_Date: "07-07-2026", Login_Time: "19:10", Location: "Chennai", Device_Information: "MacBook", VPN_Used: "No", Firewall_Alert: "No" },
 
-  securityEvents.push({
-    eventId: "SEC-3002",
-    userId: "USR-104",
-    timestamp: new Date(timeB.getTime() - 2 * 60000).toISOString().replace('T', ' ').substring(0, 19),
-    eventType: "BRUTE_FORCE_WARNING",
-    severity: "MEDIUM",
-    description: "4 consecutive failed authentication attempts from IP 197.255.195.42."
-  });
-
-
-  // 4. Scenario C: Insider Threat (High Risk)
-  // User 101 (Alana Vance) is a SysAdmin. Transfers massive funds outside standard hours.
-  const timeC = new Date(Date.now() - 2 * 3600000); // 2 hours ago
-  // Let's set the time explicitly to 02:14 AM
-  const offsetTime = new Date();
-  offsetTime.setHours(2, 14, 0, 0); // 2:14 AM
-  const timeCStr = offsetTime.toISOString().replace('T', ' ').substring(0, 19);
-
-  logins.push({
-    loginId: "LOG-1011",
-    userId: "USR-101",
-    timestamp: new Date(offsetTime.getTime() - 10 * 60000).toISOString().replace('T', ' ').substring(0, 19),
-    ipAddress: "198.51.100.12", // Normal IP
-    device: "Windows 11 PC (Chrome)", // Normal Device
-    country: "United States (New York)",
-    status: "SUCCESS",
-    failedAttemptsBeforeSuccess: 0
-  });
-
-  transactions.push({
-    transactionId: "TXN-2003",
-    userId: "USR-101",
-    timestamp: timeCStr,
-    amount: 150000.00, // Massive Transfer (exceeds $450 average drastically)
-    merchant: "Wire Transfer Off-Shore Bank",
-    status: "HOLD_SOC",
-    device: "Windows 11 PC (Chrome)",
-    ipAddress: "198.51.100.12",
-    country: "United States (New York)"
-  });
-
-  securityEvents.push({
-    eventId: "SEC-3003",
-    userId: "USR-101",
-    timestamp: timeCStr,
-    eventType: "UEBA_ANOMALY",
-    severity: "HIGH",
-    description: "High-value wire transfer ($150,000.00) initiated at 02:14 AM by administrative user outside normal working hours (08:00 - 18:00)."
-  });
-
-
-  // 5. Scenario D: Device Fingerprint Anomaly (Medium Risk)
-  // User 105 (Sarah Jenkins) uses Dell XPS/London. Suddenly makes purchase from iPad in France.
-  const timeD = new Date(Date.now() - 1 * 3600000); // 1 hour ago
-  
-  logins.push({
-    loginId: "LOG-1012",
-    userId: "USR-105",
-    timestamp: new Date(timeD.getTime() - 3 * 60000).toISOString().replace('T', ' ').substring(0, 19),
-    ipAddress: "82.120.45.109", // French IP
-    device: "Apple iPad (Safari)", // Unknown device
-    country: "France (Paris)",
-    status: "SUCCESS",
-    failedAttemptsBeforeSuccess: 0
-  });
-
-  transactions.push({
-    transactionId: "TXN-2004",
-    userId: "USR-105",
-    timestamp: timeD.toISOString().replace('T', ' ').substring(0, 19),
-    amount: 890.00,
-    merchant: "Luxury Boutique Paris",
-    status: "APPROVED",
-    device: "Apple iPad (Safari)",
-    ipAddress: "82.120.45.109",
-    country: "France (Paris)"
-  });
-
-  // More standard normal transactions to pad the dashboard
-  addNormalTransaction("USR-103", "TXN-1008", 450.00, "Germany (Frankfurt)", "MacBook Pro (Firefox)", "185.190.140.23", 5);
-  addNormalTransaction("USR-102", "TXN-1009", 12.80, "Canada (Toronto)", "Apple iPhone 15 (Safari)", "203.0.113.84", 2);
-  addNormalTransaction("USR-105", "TXN-1010", 65.00, "United Kingdom (London)", "Dell XPS 13 (Edge)", "93.184.216.34", 1);
+    // Karthik Rajan U107
+    { Customer_ID: "U107", Transaction_ID: "TXN3028", Login_Date: "01-07-2026", Login_Time: "10:51", Location: "Chennai", Device_Information: "MacBook", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U107", Transaction_ID: "TXN3029", Login_Date: "03-07-2026", Login_Time: "14:40", Location: "Chennai", Device_Information: "MacBook", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U107", Transaction_ID: "TXN3030", Login_Date: "05-07-2026", Login_Time: "17:32", Location: "Chennai", Device_Information: "MacBook", VPN_Used: "No", Firewall_Alert: "No" },
+    { Customer_ID: "U107", Transaction_ID: "TXN3031", Login_Date: "07-07-2026", Login_Time: "19:10", Location: "Chennai", Device_Information: "MacBook", VPN_Used: "No", Firewall_Alert: "No" }
+  ];
 
   return {
     transactions,
-    logins,
-    securityEvents
+    securityData
   };
 }
 
@@ -295,7 +185,6 @@ export function convertToCSV(array) {
   const rows = array.map(row => {
     return keys.map(key => {
       let cell = row[key] === null || row[key] === undefined ? "" : row[key];
-      // escape commas and double quotes
       cell = cell.toString().replace(/"/g, '""');
       if (cell.includes(",") || cell.includes("\n") || cell.includes('"')) {
         cell = `"${cell}"`;
@@ -356,7 +245,6 @@ export function parseCSV(csvText) {
   return data;
 }
 
-// Helper to provide download URLs for sample CSVs
 export function triggerCSVDownload(filename, dataArray) {
   const csvContent = convertToCSV(dataArray);
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });

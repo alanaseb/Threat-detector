@@ -20,7 +20,7 @@ export default function App() {
   const [page, setPage] = useState('welcome'); // welcome | branch_select | soc_portal
   const [selectedBranch, setSelectedBranch] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [allRawData, setAllRawData] = useState({ transactions: [], logins: [], securityEvents: [] });
+  const [allRawData, setAllRawData] = useState({ transactions: [], securityData: [] });
   const [assessments, setAssessments] = useState([]);
   const [selectedTxnId, setSelectedTxnId] = useState('');
   
@@ -43,26 +43,22 @@ export default function App() {
   const handleSelectBranch = (branchName, isSecureBranch) => {
     setSelectedBranch(branchName);
     
-    // Core filtering logic for branch
-    // If it's a secure branch, filter out simulated threats (TXN-2001, TXN-2002, TXN-2003, TXN-2004) to demonstrate a secure SOC state.
-    // If it's George Town, load the active incident dataset.
     let finalTxns = allRawData.transactions;
-    let finalLogins = allRawData.logins;
-    let finalEvents = allRawData.securityEvents;
+    let finalSec = allRawData.securityData;
 
     if (isSecureBranch) {
-      finalTxns = allRawData.transactions.filter(t => !t.transactionId.startsWith('TXN-2'));
-      finalLogins = allRawData.logins.filter(l => !l.loginId.includes('LOG-1008') && !l.loginId.includes('LOG-1009') && !l.loginId.includes('LOG-BF') && !l.loginId.includes('LOG-1010') && !l.loginId.includes('LOG-1011') && !l.loginId.includes('LOG-1012'));
-      finalEvents = allRawData.securityEvents.filter(e => !e.eventId.startsWith('SEC-'));
+      // Secure branches display clean logs (no high risk alerts)
+      finalTxns = allRawData.transactions.filter(t => t.Transaction_ID !== 'TXN3005' && t.Transaction_ID !== 'TXN3010' && t.Transaction_ID !== 'TXN3015');
+      finalSec = allRawData.securityData.filter(s => s.Transaction_ID !== 'TXN3005' && s.Transaction_ID !== 'TXN3010' && s.Transaction_ID !== 'TXN3015');
     }
 
-    const correlated = correlateAll(finalTxns, finalLogins, finalEvents);
+    const correlated = correlateAll(finalTxns, finalSec);
     setAssessments(correlated);
 
     if (correlated.length > 0) {
-      // If George Town (has threats), select the ATO incident TXN-2001. Otherwise select first transaction
-      const hasATO = correlated.some(c => c.transactionId === 'TXN-2001');
-      setSelectedTxnId(hasATO ? 'TXN-2001' : correlated[0].transactionId);
+      // Chennai George Town default investigation point is U101's threat TXN3005
+      const hasThreat = correlated.some(c => c.transactionId === 'TXN3005');
+      setSelectedTxnId(hasThreat ? 'TXN3005' : correlated[0].transactionId);
     } else {
       setSelectedTxnId('');
     }
@@ -71,11 +67,11 @@ export default function App() {
     setPage('soc_portal');
   };
 
-  const handleDataCorrelated = (transactions, logins, events) => {
+  const handleDataCorrelated = (transactions, securityData) => {
     // Keep reference of current parsed data
-    setAllRawData({ transactions, logins, securityEvents: events });
+    setAllRawData({ transactions, securityData });
     
-    const correlated = correlateAll(transactions, logins, events);
+    const correlated = correlateAll(transactions, securityData);
     setAssessments(correlated);
     if (correlated.length > 0) {
       const sorted = [...correlated].sort((a, b) => b.riskScore - a.riskScore);

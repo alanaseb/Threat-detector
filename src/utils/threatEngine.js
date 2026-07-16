@@ -1,285 +1,204 @@
 import { USER_PROFILES } from './mockData';
 
-// Helper to check if time is outside range (format "HH:MM - HH:MM")
-function isOutsideWorkingHours(timestamp, rangeStr) {
-  if (!rangeStr) return false;
-  try {
-    const time = new Date(timestamp);
-    const hours = time.getHours();
-    
-    const [start, end] = rangeStr.split('-').map(s => s.trim());
-    const startHour = parseInt(start.split(':')[0], 10);
-    const endHour = parseInt(end.split(':')[0], 10);
-    
-    if (startHour <= endHour) {
-      return hours < startHour || hours > endHour;
-    } else {
-      // Over-midnight range
-      return hours < startHour && hours > endHour;
-    }
-  } catch (e) {
-    return false;
-  }
-}
+// Dynamic score and explanation engine following your precise weights
+export function correlateTransaction(txn, sec, allTxns = []) {
+  const customerId = txn.Customer_ID || sec.Customer_ID;
+  const profile = USER_PROFILES[customerId] || {
+    userId: customerId,
+    name: txn.Account_Holder_Name || sec.Account_Holder_Name || "Bank Customer",
+    normalDevice: "Windows PC",
+    normalLocation: txn.Location || sec.Location || "Chennai",
+    accountNumber: txn.Account_Number || "Unknown",
+    ifsc: txn.IFSC_Code || "000",
+    accountType: txn.Account_Type || "Savings",
+    avgAmount: 2000
+  };
 
-// Main correlation function that generates a complete security assessment for a transaction
-export function correlateTransaction(transaction, allLogins = [], allEvents = [], allTransactions = []) {
-  const { userId, transactionId, amount, timestamp, device, ipAddress, country } = transaction;
-  
-  // 1. Get or build user baseline UEBA profile
-  let profile = USER_PROFILES[userId];
-  if (!profile) {
-    // If not a pre-configured user, calculate baseline profile dynamically
-    const userTxns = allTransactions.filter(t => t.userId === userId && t.transactionId !== transactionId);
-    const userLogins = allLogins.filter(l => l.userId === userId && l.status === "SUCCESS");
-    
-    const avgAmount = userTxns.length > 0 
-      ? userTxns.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0) / userTxns.length 
-      : 150.00;
-      
-    const normalDevice = userLogins.length > 0 ? userLogins[0].device : device;
-    const normalIp = userLogins.length > 0 ? userLogins[0].ipAddress : ipAddress;
-    const normalLocation = userLogins.length > 0 ? userLogins[0].country : country;
+  const amountVal = parseFloat(txn.Transaction_Amount || 0);
+  const locationVal = sec.Location || txn.Location || "";
+  const deviceVal = sec.Device_Information || txn.Device_Information || "";
+  const vpnVal = sec.VPN_Used || "";
+  const firewallVal = sec.Firewall_Alert || "";
+  const statusVal = txn.Transaction_Status || "";
+  const timeVal = sec.Login_Time || txn.Login_Time || "12:00";
+  const dateVal = sec.Login_Date || txn.Login_Date || "01-07-2026";
 
-    profile = {
-      userId,
-      name: `User ${userId.split('-')[1] || userId}`,
-      role: "Retail Customer",
-      normalDevice,
-      normalIp,
-      normalLocation,
-      avgTransactionAmount: avgAmount,
-      typicalLoginTime: "07:00 - 22:00",
-      isPrivileged: false
-    };
-  }
-
-  // 2. Identify transaction timeline/events
-  const txnTime = new Date(timestamp);
-  
-  // Find logins around the transaction (e.g. within 2 hours before the transaction)
-  const windowStart = new Date(txnTime.getTime() - 2 * 3600000);
-  const relevantLogins = allLogins
-    .filter(l => l.userId === userId && new Date(l.timestamp) >= windowStart && new Date(l.timestamp) <= txnTime)
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-  // Find prior logins (even outside 2h window) to calculate Impossible Travel
-  const priorLogins = allLogins
-    .filter(l => l.userId === userId && new Date(l.timestamp) < txnTime)
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // desc, [0] is closest prior
-
-  // 3. Evaluate Security Indicators & Weights
-  const indicators = [];
   let score = 0;
+  const indicators = [];
+  const explanationParts = [];
 
-  // Indicator A: High Transaction Amount (+25)
-  // We trigger if transaction exceeds 3x user's average amount, or is overall very large (> $50,000 for regular retail)
-  const isHighAmount = parseFloat(amount) > (profile.avgTransactionAmount * 3.0) || (parseFloat(amount) > 10000 && !profile.isPrivileged);
-  if (isHighAmount) {
-    indicators.push({
-      code: "HIGH_AMOUNT",
-      label: "Abnormal Transaction Value",
-      weight: 25,
-      description: `Transaction amount ($${parseFloat(amount).toLocaleString()}) significantly exceeds user's normal average ($${profile.avgTransactionAmount.toFixed(2)}).`
-    });
-    score += 25;
-  }
-
-  // Indicator B: Unknown Device (+20)
-  const isUnknownDevice = device && profile.normalDevice && !device.toLowerCase().includes(profile.normalDevice.split(' ')[0].toLowerCase());
-  if (isUnknownDevice) {
-    indicators.push({
-      code: "UNKNOWN_DEVICE",
-      label: "Untrusted Device Fingerprint",
-      weight: 20,
-      description: `Transaction initiated from a device/browser (${device}) that deviates from the user's registered device (${profile.normalDevice}).`
-    });
+  // Rule 1: VPN Used (+20)
+  if (vpnVal.toLowerCase() === "yes") {
     score += 20;
+    indicators.push({ code: "VPN", label: "VPN Usage Detected", weight: 20, description: "Connection routed through proxy/VPN network." });
+    explanationParts.push("VPN used (+20)");
   }
 
-  // Indicator C: Impossible Travel (+25)
-  // Check if there was a login in a different country within a small window
-  let impossibleTravelDetails = null;
-  if (priorLogins.length > 0) {
-    const lastLogin = priorLogins[0];
-    if (lastLogin.country !== country) {
-      const timeDiffMs = Math.abs(txnTime.getTime() - new Date(lastLogin.timestamp).getTime());
-      const timeDiffMins = timeDiffMs / 60000;
-      
-      // If time difference is less than 300 minutes (5 hours) for international, flag it
-      if (timeDiffMins < 300) {
-        impossibleTravelDetails = {
-          fromLocation: lastLogin.country,
-          toLocation: country,
-          timeDiffMins: Math.round(timeDiffMins),
-          fromIp: lastLogin.ipAddress,
-          toIp: ipAddress
-        };
-        
-        indicators.push({
-          code: "IMP_TRAVEL",
-          label: "Impossible Travel Detection",
-          weight: 25,
-          description: `Impossible physical movement detected. Session active in ${lastLogin.country} at ${lastLogin.timestamp.substring(11, 16)} and initiated transaction in ${country} just ${Math.round(timeDiffMins)} minutes later.`
-        });
-        score += 25;
-      }
-    }
+  // Rule 2: Firewall Alert (+20)
+  if (firewallVal.toLowerCase() === "yes") {
+    score += 20;
+    indicators.push({ code: "FW", label: "Firewall Alert Triggered", weight: 20, description: "Bank gateway blocked anomalous network handshake." });
+    explanationParts.push("Firewall alert triggered (+20)");
   }
 
-  // Indicator D: Multiple Failed Logins / Brute Force (+15)
-  // Check if there are failed logins leading up to the successful login that authorized this transaction
-  const successLogin = relevantLogins.find(l => l.status === "SUCCESS");
-  const failedAttempts = relevantLogins.filter(l => l.status === "FAILED");
-  const hasBruteForce = failedAttempts.length >= 3 || (successLogin && successLogin.failedAttemptsBeforeSuccess >= 3);
-  if (hasBruteForce) {
-    const attemptCount = successLogin ? Math.max(failedAttempts.length, successLogin.failedAttemptsBeforeSuccess) : failedAttempts.length;
-    indicators.push({
-      code: "BRUTE_FORCE",
-      label: "Pre-Auth Brute Force Detected",
-      weight: 15,
-      description: `${attemptCount} consecutive failed login attempts detected shortly before transaction authorization.`
-    });
+  // Rule 3: Transaction Failed/Blocked (+15)
+  if (statusVal.toLowerCase() === "failed" || statusVal.toLowerCase() === "blocked") {
     score += 15;
+    indicators.push({ code: "BLOCKED", label: "Blocked Status", weight: 15, description: "Transaction flagged and halted in pending clearance." });
+    explanationParts.push("Transaction failed/blocked (+15)");
   }
 
-  // Indicator E: New IP Address (+10)
-  const isNewIp = ipAddress && profile.normalIp && ipAddress !== profile.normalIp;
-  if (isNewIp) {
-    indicators.push({
-      code: "NEW_IP",
-      label: "Unfamiliar IP Address",
-      weight: 10,
-      description: `Access from IP ${ipAddress} which is different from user's standard IP baseline (${profile.normalIp}).`
-    });
+  // Rule 4: Location Anomaly (+15)
+  const isAnomalousLocation = locationVal && profile.normalLocation && locationVal.toLowerCase() !== profile.normalLocation.toLowerCase();
+  if (isAnomalousLocation) {
+    score += 15;
+    indicators.push({ code: "LOC", label: "Anomalous Location Jump", weight: 15, description: `Access from ${locationVal} deviates from typical branch ${profile.normalLocation}.` });
+    explanationParts.push(`Login location '${locationVal}' differs from usual '${profile.normalLocation}' (+15)`);
+  }
+
+  // Rule 5: Device Mismatch (+10)
+  const isAnomalousDevice = deviceVal && profile.normalDevice && deviceVal.toLowerCase() !== profile.normalDevice.toLowerCase();
+  if (isAnomalousDevice) {
     score += 10;
+    indicators.push({ code: "DEV", label: "Device Fingerprint Deviation", weight: 10, description: `Hardware profile ${deviceVal} differs from user register ${profile.normalDevice}.` });
+    explanationParts.push(`Device '${deviceVal}' differs from registered '${profile.normalDevice}' (+10)`);
   }
 
-  // Indicator F: Outside Normal Login Hours (+10)
-  const isOffHours = isOutsideWorkingHours(timestamp, profile.typicalLoginTime);
-  if (isOffHours) {
-    indicators.push({
-      code: "OFF_HOURS",
-      label: "Out-of-Hours Activity",
-      weight: 10,
-      description: `Transaction initiated at ${timestamp.substring(11, 16)} which falls outside normal business hours (${profile.typicalLoginTime}).`
-    });
-    score += 10;
+  // Rule 6: Transaction Spike > 10x (+15)
+  const isSpike = amountVal > (profile.avgAmount * 10);
+  if (isSpike) {
+    score += 15;
+    indicators.push({ code: "VAL_SPIKE", label: "High Volume Transaction Spike", weight: 15, description: `Amount ₹${amountVal.toLocaleString()} is over 10x the user average baseline (₹${profile.avgAmount.toLocaleString()}).` });
+    explanationParts.push(`Amount ₹${amountVal.toLocaleString()} is >10x usual (₹${Math.round(profile.avgAmount).toLocaleString()}) (+15)`);
   }
 
-  // Ensure risk score bounds (0-100)
+  // Rule 7: Off-hours Login (+5)
+  // Check if hour is between 00:00 and 05:00
+  let isOffHour = false;
+  try {
+    const hour = parseInt(timeVal.split(':')[0], 10);
+    isOffHour = hour >= 0 && hour <= 5;
+  } catch (e) {}
+
+  if (isOffHour) {
+    score += 5;
+    indicators.push({ code: "TIME", label: "Atypical Access Hours", weight: 5, description: `Activity logged at ${timeVal} (Unusual early hours).` });
+    explanationParts.push(`Unusual login hour (${timeVal}) (+5)`);
+  }
+
+  // Final score bounds
   score = Math.min(score, 100);
 
-  // 4. Map Risk Level
-  let riskLevel = "LOW";
-  if (score >= 86) riskLevel = "CRITICAL";
-  else if (score >= 61) riskLevel = "HIGH";
-  else if (score >= 31) riskLevel = "MEDIUM";
+  // Map Risk Level
+  let riskLevel = "Low";
+  if (score > 60) riskLevel = "High";
+  else if (score > 30) riskLevel = "Medium";
 
-  // 5. Categorize Threat Type (Classification)
+  // Threats Classification
   let threatClassification = "Normal Transactions";
-  let triggerATO = isUnknownDevice && isNewIp && (impossibleTravelDetails !== null || isHighAmount);
-  let triggerInsider = profile.isPrivileged && (isOffHours || isHighAmount) && score >= 30;
-  let triggerBruteForce = hasBruteForce && score >= 30;
-
-  if (triggerATO) {
+  if (score === 100) {
     threatClassification = "Potential Account Takeover (ATO)";
-  } else if (triggerInsider) {
-    threatClassification = "Privileged Insider Threat Anomaly";
-  } else if (triggerBruteForce) {
-    threatClassification = "Brute Force Auth Attack";
-  } else if (score >= 60) {
-    threatClassification = "High-Risk Fraud Deviation";
-  } else if (score >= 30) {
-    threatClassification = "Suspicious Behavioral Deviation";
+  } else if (score > 60) {
+    threatClassification = "Anomalous Transaction Alert";
+  } else if (score > 30) {
+    threatClassification = "Behavioral Deviation Warning";
   }
 
-  // 6. Action Recommendation
+  // recommended action
   let recommendedAction = "Allow Transaction";
-  if (score >= 86) {
+  if (score === 100) {
     recommendedAction = "Freeze Account & Cancel Transaction";
-  } else if (score >= 61) {
-    recommendedAction = "Notify Security Operations Center (SOC) & Hold Transaction";
-  } else if (score >= 31) {
+  } else if (score > 60) {
+    recommendedAction = "Notify Security Operations Center (SOC)";
+  } else if (score > 30) {
     recommendedAction = "Require Multi-Factor Authentication (MFA)";
   }
 
-  // 7. Reconstruct the interactive Attack Storyline timeline
+  // Build explanation text
+  const riskExplanationText = score === 0 
+    ? "No risk indicators triggered" 
+    : explanationParts.join("; ");
+
+  // Build chronological Attack Storyline
   const timeline = [];
   
-  // Sort and populate login activity in chronology
-  relevantLogins.forEach(login => {
-    if (login.status === "FAILED") {
-      timeline.push({
-        time: login.timestamp.substring(11, 16),
-        title: "Failed Login Attempt",
-        description: `IP: ${login.ipAddress} (${login.device})`,
-        type: "warning"
-      });
-    } else {
-      const isDevChange = login.device !== profile.normalDevice;
-      timeline.push({
-        time: login.timestamp.substring(11, 16),
-        title: isDevChange ? "Login from Unknown Device" : "Successful User Login",
-        description: `IP: ${login.ipAddress} (${login.country})`,
-        type: isDevChange ? "warning" : "success"
-      });
-    }
+  // 1. Session start
+  timeline.push({
+    time: timeVal,
+    title: "Login Logged",
+    description: `Device: ${deviceVal} | Location: ${locationVal} ${vpnVal === 'Yes' ? '(VPN Active)' : ''}`,
+    type: isAnomalousLocation || isAnomalousDevice || vpnVal === 'Yes' ? 'warning' : 'success'
   });
 
-  // If impossible travel was from a prior login not in the relevant window, add context step
-  if (impossibleTravelDetails) {
-    timeline.unshift({
-      time: priorLogins[0].timestamp.substring(11, 16),
-      title: `Prior Session Active`,
-      description: `Location: ${impossibleTravelDetails.fromLocation} (IP: ${impossibleTravelDetails.fromIp})`,
-      type: "success"
+  // 2. Firewall / security event
+  if (firewallVal === 'Yes') {
+    timeline.push({
+      time: timeVal,
+      title: "Firewall Warning Triggered",
+      description: "Gateway logged malicious ingress threat vector.",
+      type: 'danger'
     });
   }
 
-  // Transaction Event
+  // 3. Transaction
   timeline.push({
-    time: timestamp.substring(11, 16),
-    title: "High Value Transaction Initiated",
-    description: `Transfer of $${parseFloat(amount).toLocaleString()} to ${transaction.merchant || 'External Account'}`,
-    type: score >= 60 ? "danger" : "warning"
+    time: timeVal,
+    title: `Transfer of ₹${amountVal.toLocaleString()} Initiated`,
+    description: `Type: ${txn.Transaction_Type} | Account: ${profile.accountNumber}`,
+    type: isSpike ? 'danger' : 'success'
   });
 
-  // AI correlation decision
+  // 4. Decision
   timeline.push({
-    time: new Date(txnTime.getTime() + 1 * 60000).toISOString().substring(11, 16), // +1 minute
-    title: `Quantum Sentinel AI: ${threatClassification}`,
-    description: `Calculated Risk: ${score}% - Recommended: ${recommendedAction}`,
-    type: score >= 60 ? "danger" : "warning"
+    time: timeVal,
+    title: score > 30 ? "AI Alerts: Critical ATO Hijack" : "System Status Approved",
+    description: `Risk Assessment: ${score}% | Status: ${statusVal}`,
+    type: score > 30 ? 'danger' : 'success'
   });
 
-  // Output assessment package
   return {
-    transactionId,
-    userId,
+    transactionId: txn.Transaction_ID,
+    userId: customerId,
     userName: profile.name,
-    userRole: profile.role,
-    amount,
-    timestamp,
-    device,
-    ipAddress,
-    country,
-    merchant: transaction.merchant || "Standard Store",
+    userRole: profile.accountType === "Savings" ? "Retail Client (Savings)" : "Commercial Client (Current)",
+    amount: amountVal,
+    timestamp: `${dateVal} ${timeVal}`,
+    device: deviceVal,
+    ipAddress: sec.ipAddress || "198.51.100.12",
+    country: locationVal,
+    merchant: txn.Transaction_Type || "Standard Transfer",
     riskScore: score,
-    riskLevel,
+    riskLevel: riskLevel,
     threatClassification,
     indicators,
     recommendedAction,
     timeline,
-    profile,
-    impossibleTravelDetails
+    profile: {
+      normalDevice: profile.normalDevice,
+      normalIp: profile.normalLocation === "Coimbatore" ? "198.51.100.12" : "203.0.113.84",
+      normalLocation: profile.normalLocation,
+      avgTransactionAmount: profile.avgAmount,
+      typicalLoginTime: "07:00 - 23:00"
+    },
+    status: statusVal,
+    riskExplanation: riskExplanationText
   };
 }
 
-// Bulk process an entire transactions dataset
-export function correlateAll(transactions, logins, events) {
-  const allTxns = [...transactions];
-  return transactions.map(t => {
-    return correlateTransaction(t, logins, events, allTxns);
+// Relational inner join by Transaction_ID
+export function correlateAll(transactions = [], securityData = []) {
+  return transactions.map(txn => {
+    const sec = securityData.find(s => s.Transaction_ID === txn.Transaction_ID) || {
+      Customer_ID: txn.Customer_ID,
+      Transaction_ID: txn.Transaction_ID,
+      Login_Date: txn.Login_Date || "01-07-2026",
+      Login_Time: txn.Login_Time || "12:00",
+      Location: txn.Location || "Chennai",
+      Device_Information: txn.Device_Information || "Windows PC",
+      VPN_Used: txn.VPN_Used || "No",
+      Firewall_Alert: txn.Firewall_Alert || "No"
+    };
+
+    return correlateTransaction(txn, sec, transactions);
   });
 }
