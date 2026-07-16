@@ -349,7 +349,7 @@ export default function App() {
             alignItems: 'start'
           }}>
             {/* Split Pane: Transaction List on Left */}
-            <div>
+            <div style={{ minWidth: 0 }}>
               <TransactionList 
                 assessments={assessments} 
                 selectedTxnId={selectedTxnId}
@@ -358,7 +358,7 @@ export default function App() {
             </div>
             
             {/* Split Pane: Detail Report Inspector on Right */}
-            <div>
+            <div style={{ minWidth: 0 }}>
               <TransactionDetail 
                 assessment={selectedAssessment} 
                 onActionApplied={handleActionApplied}
