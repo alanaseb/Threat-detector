@@ -169,25 +169,22 @@ export default function Copilot({ assessments }) {
       <div className="copilot-messages" style={{
         flex: 1,
         overflowY: 'auto',
-        padding: '0.5rem',
+        padding: '1rem',
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
-        background: 'rgba(7, 10, 19, 0.4)',
+        background: '#f8fafc',
         borderRadius: '8px',
-        border: '1px solid rgba(255,255,255,0.03)',
+        border: '1px solid var(--border-color)',
         marginBottom: '1rem'
       }}>
         {messages.map((m, idx) => (
           <div 
             key={idx}
-            className={`message-bubble ${m.role}`}
+            className={`message-bubble ${m.role === 'user' ? 'user' : 'ai'}`}
             style={{
               alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-              background: m.role === 'user' ? 'rgba(79, 172, 254, 0.15)' : 'rgba(22, 30, 49, 0.75)',
-              border: m.role === 'user' ? '1px solid rgba(79, 172, 254, 0.3)' : '1px solid var(--border-color)',
-              color: '#ffffff',
-              borderRadius: '12px',
+              borderRadius: '10px',
               padding: '0.75rem 1rem',
               maxWidth: '80%',
               fontSize: '0.85rem'
@@ -205,10 +202,7 @@ export default function Copilot({ assessments }) {
         {loading && (
           <div className="message-bubble ai" style={{
             alignSelf: 'flex-start',
-            background: 'rgba(22, 30, 49, 0.75)',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-muted)',
-            borderRadius: '12px',
+            borderRadius: '10px',
             padding: '0.75rem 1rem',
             fontSize: '0.85rem',
             display: 'flex',

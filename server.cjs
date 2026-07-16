@@ -363,23 +363,38 @@ app.post('/api/copilot-chat', async (req, res) => {
       .map(t => `- TXN ID: ${t.transactionId}, User: ${t.userName}, Amount: ₹${t.amount}, Risk: ${t.riskScore}% (${t.threatClassification}), Device: ${t.device}, Location: ${t.country}`)
       .join('\n');
 
-    const formattedHistory = (chatHistory || []).map(h => 
-      `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.text}`
-    ).join('\n');
+    const systemPrompt = `You are Quantum Sentinel AI Security Copilot, a highly knowledgeable, professional, and friendly virtual cybersecurity analyst.
+    You are assisting a bank's SOC team. Converse with the user in a realistic, natural 1-on-1 dialogue format.
+    
+    Here is the active threat context from the security dashboard:
+    ${threatSummaries || "No active alerts or suspicious transactions at this time."}
 
-    const prompt = `
-      You are Quantum Sentinel AI Security Copilot, a highly knowledgeable virtual security analyst assisting a bank's SOC team.
-      
-      Here is the current security dashboard context:
-      ${threatSummaries || "No active alerts or suspicious transactions at this time."}
-      
-      Conversation History:
-      ${formattedHistory}
-      
-      New User Message: ${userMessage}
-      
-      Provide a helpful, precise, and concise response using professional cybersecurity terminology (max 150 words). If the user asks about a specific transaction or user, look up its details in the context.
-    `;
+    Guidelines:
+    - Address the security analyst directly and speak in a helpful, collaborative, 1-on-1 conversational style.
+    - Provide precise and concise responses using professional cybersecurity terminology.
+    - Keep responses under 150 words.
+    - Reference specific TXN IDs and users from the context if asked.`;
+
+    const messages = [
+      { role: "system", content: systemPrompt }
+    ];
+
+    // Map history to structured chat roles
+    (chatHistory || []).forEach(h => {
+      // Skip the initial placeholder welcome message if it doesn't fit user/assistant pattern
+      if (h.text && !h.text.startsWith("Hello! I am your Quantum Sentinel")) {
+        messages.push({
+          role: h.role === 'user' ? 'user' : 'assistant',
+          content: h.text
+        });
+      }
+    });
+
+    // Add current user message
+    messages.push({
+      role: "user",
+      content: userMessage
+    });
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -389,11 +404,8 @@ app.post('/api/copilot-chat', async (req, res) => {
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: "You are a cyber security advisor assistant bot." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.3
+        messages: messages,
+        temperature: 0.4
       })
     });
 
