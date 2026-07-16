@@ -229,7 +229,7 @@ export default function Dashboard({ assessments, onViewTransaction }) {
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>User: {alert.userName} | IP: {alert.ipAddress}</div>
                 </div>
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{alert.timestamp}</div>
-                <div style={{ fontWeight: 700 }}>${parseFloat(alert.amount).toLocaleString()}</div>
+                <div style={{ fontWeight: 700 }}>₹{parseFloat(alert.amount).toLocaleString()}</div>
                 <div>
                   <span className={`risk-badge risk-${alert.riskLevel.toLowerCase()}`}>
                     {alert.riskLevel} ({alert.riskScore}%)

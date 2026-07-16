@@ -117,7 +117,7 @@ export default function ReportGenerator({ assessment }) {
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>PREVENTED FINANCIAL LOSS</span>
               <div style={{ fontWeight: 800, fontSize: '1.2rem', color: financialLossPrevented > 0 ? 'var(--color-success)' : 'var(--text-main)' }}>
-                ${financialLossPrevented.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{financialLossPrevented.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             </div>
             <div>
@@ -144,7 +144,7 @@ export default function ReportGenerator({ assessment }) {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Cleared Value:</span>
-                <span style={{ fontWeight: 700 }}>${parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} USD</span>
+                <span style={{ fontWeight: 700 }}>₹{parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
 
@@ -206,8 +206,8 @@ export default function ReportGenerator({ assessment }) {
               </tr>
               <tr>
                 <td style={{ padding: '0.75rem 0', fontWeight: 600 }}>Financial Limit Threshold</td>
-                <td>Avg ${profile.avgTransactionAmount.toFixed(2)}</td>
-                <td>${parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                <td>Avg ₹{profile.avgTransactionAmount.toFixed(2)}</td>
+                <td>₹{parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                 <td style={{ textAlign: 'right', fontWeight: 700, color: parseFloat(amount) > profile.avgTransactionAmount * 3 ? 'var(--color-danger)' : 'var(--color-success)' }}>
                   {parseFloat(amount) > profile.avgTransactionAmount * 3 ? "Transaction Spike" : "Pass"}
                 </td>
@@ -238,7 +238,7 @@ export default function ReportGenerator({ assessment }) {
               Correlated telemetry logs demonstrate critical risk matching user credential stuffing or account takeover. 
               The anomaly engine confirmed device fingerprint deviations alongside impossible travel vectors. 
               Specifically, IP ${ipAddress} logged in from ${country} within a temporal boundary that prohibits physical travel from the user's primary operating region.
-              Furthermore, the transaction value of $${parseFloat(amount).toLocaleString()} is abnormal compared to the average retail profile ($${profile.avgTransactionAmount.toFixed(2)}).`
+              Furthermore, the transaction value of ₹${parseFloat(amount).toLocaleString()} is abnormal compared to the average retail profile (₹${profile.avgTransactionAmount.toFixed(2)}).`
             ) : (
               `Transaction is classified as Normal / Low Risk (Risk Score: ${riskScore}%). No security anomalies detected.
               Session parameters conform to User and Entity Behavior Analytics (UEBA) baseline.`

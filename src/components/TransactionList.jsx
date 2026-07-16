@@ -100,7 +100,7 @@ export default function TransactionList({ assessments, selectedTxnId, onSelectTr
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.userId} ({item.userRole})</div>
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>{item.timestamp}</td>
-                    <td style={{ fontWeight: 600 }}>${parseFloat(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td style={{ fontWeight: 600 }}>₹{parseFloat(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td>{item.country}</td>
                     <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.device}>
                       <div>{item.device}</div>

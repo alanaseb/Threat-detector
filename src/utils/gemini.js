@@ -30,7 +30,7 @@ export async function generateTransactionExplanation(assessment) {
       - Transaction ID: ${assessment.transactionId}
       - User: ${assessment.userName} (${assessment.userId})
       - Role: ${assessment.userRole}
-      - Amount: $${parseFloat(assessment.amount).toLocaleString()}
+      - Amount: ₹${parseFloat(assessment.amount).toLocaleString()}
       - Timestamp: ${assessment.timestamp}
       - Device: ${assessment.device}
       - Location: ${assessment.country} (IP: ${assessment.ipAddress})
@@ -39,7 +39,7 @@ export async function generateTransactionExplanation(assessment) {
       - Normal Device: ${assessment.profile.normalDevice}
       - Normal IP: ${assessment.profile.normalIp}
       - Normal Location: ${assessment.profile.normalLocation}
-      - Normal Avg Txn: $${assessment.profile.avgTransactionAmount}
+      - Normal Avg Txn: ₹${assessment.profile.avgTransactionAmount}
       - Normal Login Hours: ${assessment.profile.typicalLoginTime}
       
       Security Assessment:
@@ -76,7 +76,7 @@ This transaction aligns fully with the established User and Entity Behavior Anal
 * **Behavioral Checkpoints**:
   * **Device Match**: The initiating device \`${device}\` matches the user's trusted device \`${profile.normalDevice}\`.
   * **Network Verification**: The access IP \`${ipAddress}\` aligns with the user's home network \`${profile.normalIp}\`.
-  * **Transaction Baseline**: The amount of $${parseFloat(amount).toFixed(2)} is well within the typical average spend ($${profile.avgTransactionAmount.toFixed(2)}).
+  * **Transaction Baseline**: The amount of ₹${parseFloat(amount).toFixed(2)} is well within the typical average spend (₹${profile.avgTransactionAmount.toFixed(2)}).
 
 **SOC Decision**: The correlation engine indicates no anomalous signals. The transaction is approved.`;
   }
@@ -89,7 +89,7 @@ The engine has flagged a high-probability **Account Takeover (ATO)** by correlat
 
 1. **Impossible Physical Travel**: A session was active in ${profile.normalLocation} and initiated a transaction from ${country} within minutes. This represents physical impossibility.
 2. **Device Fingerprint Mismatch**: The device \`${device}\` does not match the registered user hardware \`${profile.normalDevice}\`.
-3. **Anomalous Transaction Volume**: The transaction amount of **$${parseFloat(amount).toLocaleString()}** deviates drastically from the user's average baseline ($${profile.avgTransactionAmount.toFixed(2)}), representing a **${Math.round(amount / profile.avgTransactionAmount)}x** increase.
+3. **Anomalous Transaction Volume**: The transaction amount of **₹${parseFloat(amount).toLocaleString()}** deviates drastically from the user's average baseline (₹${profile.avgTransactionAmount.toFixed(2)}), representing a **${Math.round(amount / profile.avgTransactionAmount)}x** increase.
 4. **New Access Location**: The transaction originated from IP \`${ipAddress}\` in ${country}, which has never been associated with this account.
 
 **SOC Action Recommendation**: ${recommendedAction}. All active sessions must be terminated, and the user must be contacted via out-of-band communication.`;
@@ -101,7 +101,7 @@ The engine has flagged a high-probability **Account Takeover (ATO)** by correlat
 
 A high-risk administrative anomaly has been identified on the account of **${userName}** (Role: ${profile.role}):
 
-1. **Privileged Privilege Deviation**: The transaction consists of a high-value transfer of **$${parseFloat(amount).toLocaleString()}** which represents a massive spike relative to the standard administrator average ($${profile.avgTransactionAmount.toFixed(2)}).
+1. **Privileged Privilege Deviation**: The transaction consists of a high-value transfer of **₹${parseFloat(amount).toLocaleString()}** which represents a massive spike relative to the standard administrator average (₹${profile.avgTransactionAmount.toFixed(2)}).
 2. **Temporal Anomaly (Out-of-Hours)**: The transaction was executed at ${assessment.timestamp.substring(11, 16)}, which falls significantly outside normal working hours (${profile.typicalLoginTime}).
 3. **Device & Network Authenticity**: Crucially, the transaction was authorized from the user's standard trusted device (\`${device}\`) and normal IP (\`${ipAddress}\`). 
 
@@ -117,7 +117,7 @@ Suspicious transaction authorization preceded by active credential guessing on t
 
 1. **Authentication Telemetry**: 4 consecutive failed login attempts occurred immediately prior to the successful authorization.
 2. **IP Correlation**: The brute-force attempts and subsequent successful transaction originated from an unfamiliar IP address (\`${ipAddress}\`), suggesting a credential stuffing attack.
-3. **Value Spike**: The transaction amount of **$${parseFloat(amount).toLocaleString()}** is elevated compared to the average retail profile.
+3. **Value Spike**: The transaction amount of **₹${parseFloat(amount).toLocaleString()}** is elevated compared to the average retail profile.
 
 **SOC Action Recommendation**: ${recommendedAction}. Prompt the user for second-factor SMS/hardware token approval to authorize this transfer.`;
   }
@@ -129,7 +129,7 @@ Suspicious transaction authorization preceded by active credential guessing on t
 Anomalous indicators detected for user **${userName}**:
 * **Device**: Unknown device fingerprint (\`${device}\`).
 * **Location**: Unfamiliar IP address (\`${ipAddress}\`) in ${country}.
-* **Value**: Elevated amount of $${parseFloat(amount).toLocaleString()} (avg: $${profile.avgTransactionAmount.toFixed(2)}).
+* **Value**: Elevated amount of ₹${parseFloat(amount).toLocaleString()} (avg: ₹${profile.avgTransactionAmount.toFixed(2)}).
 
 **SOC Action Recommendation**: ${recommendedAction}.`;
 }
@@ -150,7 +150,7 @@ export async function chatWithCopilot(userMessage, chatHistory = [], allAssessme
     // Build context summarizing existing high/medium risk transactions
     const threatSummaries = allAssessments
       .filter(t => t.riskScore > 30)
-      .map(t => `- TXN ID: ${t.transactionId}, User: ${t.userName}, Amount: $${t.amount}, Risk: ${t.riskScore}% (${t.threatClassification}), Device: ${t.device}, Location: ${t.country}`)
+      .map(t => `- TXN ID: ${t.transactionId}, User: ${t.userName}, Amount: ₹${t.amount}, Risk: ${t.riskScore}% (${t.threatClassification}), Device: ${t.device}, Location: ${t.country}`)
       .join('\n');
 
     const formattedHistory = chatHistory.map(h => 
@@ -191,7 +191,7 @@ function getMockChatResponse(message, allAssessments) {
 * **User**: ${match.userName} (${match.userRole})
 * **Alert Status**: ${match.riskLevel} Risk (${match.riskScore}%)
 * **Threat Type**: ${match.threatClassification}
-* **Financial Amount**: $${parseFloat(match.amount).toLocaleString()}
+* **Financial Amount**: ₹${parseFloat(match.amount).toLocaleString()}
 * **Recommended Action**: \`${match.recommendedAction}\`
 
 **Threat Synopsis**: The threat correlation engine flagged this transaction due to ${match.indicators.map(i => i.label).join(", ")}. ${match.impossibleTravelDetails ? `Impossible Travel was detected between ${match.impossibleTravelDetails.fromLocation} and ${match.impossibleTravelDetails.toLocation}.` : ""}`;
@@ -227,7 +227,7 @@ ${medAlerts.map(a => `  * **${a.transactionId}** (${a.userName}): **${a.threatCl
       return `### Insider Threat Alert: **${insider.transactionId}**
 We detected anomalous activity on the account of **${insider.userName}** (${insider.userRole}).
 
-* **Incident Details**: Initiated a transfer of $150,000.00 at 02:14 AM (outside typical hours 08:00 - 18:00).
+* **Incident Details**: Initiated a transfer of ₹150,000.00 at 02:14 AM (outside typical hours 08:00 - 18:00).
 * **Mitigating Factors**: Device and IP address are normal, which points to either a malicious insider, compromised credentials used from the native host, or an approved urgent emergency transfer.
 * **Recommended Action**: Hold transaction and contact the user for out-of-band authorization.`;
     }

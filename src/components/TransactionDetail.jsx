@@ -245,13 +245,13 @@ export default function TransactionDetail({ assessment, onActionApplied }) {
                   <div style={{ width: '45%', fontSize: '0.85rem' }}>
                     <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>Current Amount:</div>
                     <div style={{ fontWeight: 800, color: parseFloat(amount) > profile.avgTransactionAmount * 3 ? 'var(--color-warning)' : 'inherit', fontSize: '1rem' }}>
-                      ${parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      ₹{parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                   <ArrowRight size={14} color="var(--text-muted)" />
                   <div style={{ width: '45%', fontSize: '0.85rem', textAlign: 'right' }}>
                     <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>User Historical Avg:</div>
-                    <div style={{ fontWeight: 600 }}>${profile.avgTransactionAmount.toFixed(2)}</div>
+                    <div style={{ fontWeight: 600 }}>₹{profile.avgTransactionAmount.toFixed(2)}</div>
                   </div>
                 </div>
               </div>
