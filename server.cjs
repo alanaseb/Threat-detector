@@ -176,30 +176,99 @@ app.get('/api/db-status', (req, res) => {
   });
 });
 
+// Helper to calculate dynamic real timings relative to system time
+function getRealTimingForTxn(txnId) {
+  const idNum = parseInt(txnId.replace(/\D/g, ""), 10) || 3000;
+  
+  let seq = 0;
+  let total = 5;
+  if (idNum >= 3001 && idNum <= 3005) { seq = idNum - 3001; total = 5; }
+  else if (idNum >= 3006 && idNum <= 3010) { seq = idNum - 3006; total = 5; }
+  else if (idNum >= 3011 && idNum <= 3015) { seq = idNum - 3011; total = 5; }
+  else if (idNum >= 3016 && idNum <= 3019) { seq = idNum - 3016; total = 4; }
+  else if (idNum >= 3020 && idNum <= 3023) { seq = idNum - 3020; total = 4; }
+  else if (idNum >= 3024 && idNum <= 3027) { seq = idNum - 3024; total = 4; }
+  else if (idNum >= 3028 && idNum <= 3031) { seq = idNum - 3028; total = 4; }
+  else {
+    seq = idNum % 5;
+    total = 5;
+  }
+  
+  const now = new Date();
+  const daysAgo = (total - 1) - seq;
+  const targetDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+  
+  let hour = 12;
+  let minute = 0;
+  
+  if (seq === total - 1) {
+    const tempTime = new Date(now.getTime() - (10 * 60 * 1000));
+    hour = tempTime.getHours();
+    minute = tempTime.getMinutes();
+  } else {
+    hour = (9 + (seq * 3)) % 24;
+    minute = (15 + (seq * 12)) % 60;
+  }
+  
+  const dd = String(targetDate.getDate()).padStart(2, '0');
+  const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+  const yyyy = targetDate.getFullYear();
+  const dateStr = `${dd}-${mm}-${yyyy}`;
+  const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  
+  return { dateStr, timeStr };
+}
+
 // Endpoint for Transactions
 app.get('/api/transactions', async (req, res) => {
+  let txns = [];
   if (dbConnected) {
     try {
-      const data = await db.collection("transactions").find({}).toArray();
-      return res.json(data);
+      txns = await db.collection("transactions").find({}).toArray();
     } catch (e) {
       console.error("Error reading transactions from MongoDB (falling back to memory):", e.message);
+      txns = memoryTransactions;
     }
+  } else {
+    txns = memoryTransactions;
   }
-  res.json(memoryTransactions);
+
+  const mapped = txns.map(t => {
+    const { dateStr, timeStr } = getRealTimingForTxn(t.Transaction_ID);
+    return {
+      ...t,
+      Login_Date: dateStr,
+      Login_Time: timeStr
+    };
+  });
+  
+  res.json(mapped);
 });
 
 // Endpoint for Security Telemetry
 app.get('/api/securityData', async (req, res) => {
+  let secData = [];
   if (dbConnected) {
     try {
-      const data = await db.collection("security_data").find({}).toArray();
-      return res.json(data);
+      secData = await db.collection("security_data").find({}).toArray();
     } catch (e) {
       console.error("Error reading security data from MongoDB (falling back to memory):", e.message);
+      secData = memorySecurityData;
     }
+  } else {
+    secData = memorySecurityData;
   }
-  res.json(memorySecurityData);
+
+  const mapped = secData.map(s => {
+    const { dateStr, timeStr } = getRealTimingForTxn(s.Transaction_ID);
+    return {
+      ...s,
+      Login_Date: dateStr,
+      Login_Time: timeStr
+    };
+  });
+
+  res.json(mapped);
 });
 
 // Endpoint for User Profiles
