@@ -129,7 +129,7 @@ export default function TransactionDetail({ assessment, onActionApplied }) {
               borderRadius: '4px',
               fontWeight: 700
             }}>
-              {aiKeyStatus ? "LIVE GEMINI AI" : "SIMULATED AI ENGINE"}
+              {aiKeyStatus ? "LIVE GROQ AI" : "SIMULATED AI ENGINE"}
             </span>
           </div>
           <h2 style={{ fontSize: '1.75rem', marginTop: '0.25rem' }}>{transactionId}</h2>
@@ -339,7 +339,7 @@ export default function TransactionDetail({ assessment, onActionApplied }) {
               {loading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1rem' }}>
                   <RefreshCw size={24} className="spin-animation" style={{ color: 'var(--accent-cyan)' }} />
-                  <span className="typing-loader" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Querying Gemini Neural Correlation Engine...</span>
+                  <span className="typing-loader" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Querying Groq Neural Correlation Engine...</span>
                 </div>
               ) : (
                 <div className="ai-report-content">

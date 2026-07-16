@@ -71,9 +71,9 @@ export default function App() {
     
     // Check key status
     setIsLiveAi(isAiActive());
-    const storedKey = localStorage.getItem('quantum_sentinel_gemini_key') || "";
+    const storedKey = localStorage.getItem('quantum_sentinel_groq_key') || "";
     setApiKeyInput(storedKey);
-  }, []);
+  }, [] );
 
   const handleSelectBranch = (branchName, isSecureBranch) => {
     setSelectedBranch(branchName);
@@ -116,9 +116,9 @@ export default function App() {
 
   const handleSaveApiKey = () => {
     if (apiKeyInput.trim()) {
-      localStorage.setItem('quantum_sentinel_gemini_key', apiKeyInput.trim());
+      localStorage.setItem('quantum_sentinel_groq_key', apiKeyInput.trim());
     } else {
-      localStorage.removeItem('quantum_sentinel_gemini_key');
+      localStorage.removeItem('quantum_sentinel_groq_key');
     }
     setIsLiveAi(isAiActive());
     setShowSettings(false);
@@ -277,21 +277,21 @@ export default function App() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Key color="var(--accent-cyan)" size={20} />
-              <h3 style={{ fontSize: '1.25rem' }}>AI Configuration Settings</h3>
+              <h3 style={{ fontSize: '1.25rem' }}>Groq AI Configuration Settings</h3>
             </div>
 
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-              Enter your Google Gemini API key to activate live generative AI explanation reports and copilot responses. 
+              Enter your Groq API key to activate live Llama-3.3-70b AI explanation reports and copilot responses. 
               The key is saved locally in your browser memory.
               <br /><br />
               If left blank, the platform operates in <strong>Local Simulation Mode</strong> (heuristics-based insights).
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Gemini API Key (VITE_GEMINI_API_KEY)</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Groq API Key (VITE_GROQ_API_KEY)</label>
               <input 
                 type="password" 
-                placeholder="AIzaSy..." 
+                placeholder="gsk_..." 
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
                 className="cyber-input"
@@ -300,7 +300,7 @@ export default function App() {
 
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
               <button 
-                onClick={() => { setApiKeyInput(""); localStorage.removeItem('quantum_sentinel_gemini_key'); setIsLiveAi(false); setShowSettings(false); }}
+                onClick={() => { setApiKeyInput(""); localStorage.removeItem('quantum_sentinel_groq_key'); setIsLiveAi(false); setShowSettings(false); }}
                 className="cyber-button secondary"
                 style={{ fontSize: '0.8rem' }}
               >

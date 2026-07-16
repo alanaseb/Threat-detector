@@ -1,4 +1,21 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+const fs = require('fs');
+const path = require('path');
+try {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const parts = line.split('=');
+      if (parts.length >= 2) {
+        const key = parts[0].trim();
+        const val = parts.slice(1).join('=').trim().replace(/(^['"]|['"]$)/g, '');
+        process.env[key] = val;
+      }
+    });
+  }
+} catch (e) {}
+
 const dns = require('dns');
 try {
   dns.setServers(['8.8.8.8', '8.8.4.4']);
@@ -250,6 +267,151 @@ app.post('/api/ingest', async (req, res) => {
   res.json({ success: true, message: "Server connection offline; loaded into server cache memory." });
 });
 
+// Endpoint for Groq Explainable AI Generation
+app.post('/api/generate-explanation', async (req, res) => {
+  const { assessment } = req.body;
+  if (!assessment) {
+    return res.status(400).json({ error: "Missing assessment object." });
+  }
+
+  const authHeader = req.headers.authorization || "";
+  const apiKey = authHeader.replace(/^Bearer\s+/i, "").trim() || process.env.VITE_GROQ_API_KEY || "";
+
+  if (!apiKey) {
+    return res.status(400).json({ error: "Missing Groq API Key. Please configure it in .env or settings." });
+  }
+
+  try {
+    const prompt = `
+      You are Quantum Sentinel AI, a leading cyber threat correlation engine for a tier-1 banking Security Operations Center (SOC).
+      Analyze the following correlated threat assessment and write a professional, detailed explainable AI explanation (approx. 150-200 words).
+      
+      Transaction Details:
+      - Transaction ID: ${assessment.transactionId}
+      - User: ${assessment.userName} (${assessment.userId})
+      - Role: ${assessment.userRole}
+      - Amount: ₹${parseFloat(assessment.amount).toLocaleString()}
+      - Timestamp: ${assessment.timestamp}
+      - Device: ${assessment.device}
+      - Location: ${assessment.country} (IP: ${assessment.ipAddress})
+      
+      UEBA Baseline Profile:
+      - Normal Device: ${assessment.profile.normalDevice}
+      - Normal IP: ${assessment.profile.normalIp}
+      - Normal Location: ${assessment.profile.normalLocation}
+      - Normal Avg Txn: ₹${assessment.profile.avgTransactionAmount}
+      - Normal Login Hours: ${assessment.profile.typicalLoginTime}
+      
+      Security Assessment:
+      - Risk Score: ${assessment.riskScore}%
+      - Risk Level: ${assessment.riskLevel}
+      - Threat Classification: ${assessment.threatClassification}
+      - Recommended SOC Action: ${assessment.recommendedAction}
+      - Triggered Indicators: ${JSON.stringify(assessment.indicators)}
+
+      Provide your analysis in clean Markdown containing:
+      1. **Threat Classification & Risk Summary**: Summarize what occurred and why the risk score is what it is.
+      2. **Correlated Indicators Breakdown**: Call out how the login activity and transaction data correlate (e.g. failed logins, device change, impossible travel).
+      3. **Recommended Actions**: Explain the reasoning for the recommended SOC action (e.g. Freeze Account vs MFA).
+    `;
+
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: "You are an expert banking cybersecurity analyst correlation bot." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.2
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`HTTP ${response.status} from Groq: ${errText}`);
+    }
+
+    const resData = await response.json();
+    const explanationText = resData.choices?.[0]?.message?.content || "No explanation returned from AI.";
+    res.json({ explanation: explanationText });
+
+  } catch (err) {
+    console.error("Groq API Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint for Groq AI Copilot Chat
+app.post('/api/copilot-chat', async (req, res) => {
+  const { userMessage, chatHistory, allAssessments } = req.body;
+
+  const authHeader = req.headers.authorization || "";
+  const apiKey = authHeader.replace(/^Bearer\s+/i, "").trim() || process.env.VITE_GROQ_API_KEY || "";
+
+  if (!apiKey) {
+    return res.status(400).json({ error: "Missing Groq API Key. Please configure it in .env or settings." });
+  }
+
+  try {
+    const threatSummaries = (allAssessments || [])
+      .filter(t => t.riskScore > 30)
+      .map(t => `- TXN ID: ${t.transactionId}, User: ${t.userName}, Amount: ₹${t.amount}, Risk: ${t.riskScore}% (${t.threatClassification}), Device: ${t.device}, Location: ${t.country}`)
+      .join('\n');
+
+    const formattedHistory = (chatHistory || []).map(h => 
+      `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.text}`
+    ).join('\n');
+
+    const prompt = `
+      You are Quantum Sentinel AI Security Copilot, a highly knowledgeable virtual security analyst assisting a bank's SOC team.
+      
+      Here is the current security dashboard context:
+      ${threatSummaries || "No active alerts or suspicious transactions at this time."}
+      
+      Conversation History:
+      ${formattedHistory}
+      
+      New User Message: ${userMessage}
+      
+      Provide a helpful, precise, and concise response using professional cybersecurity terminology (max 150 words). If the user asks about a specific transaction or user, look up its details in the context.
+    `;
+
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: "You are a cyber security advisor assistant bot." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.3
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`HTTP ${response.status} from Groq: ${errText}`);
+    }
+
+    const resData = await response.json();
+    const reply = resData.choices?.[0]?.message?.content || "No reply returned from AI.";
+    res.json({ reply });
+
+  } catch (err) {
+    console.error("Groq Copilot Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`Backend correlation server listening on port ${PORT}`);
+  console.log(`Backend server listening on port ${PORT}`);
 });

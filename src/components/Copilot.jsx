@@ -127,7 +127,7 @@ export default function Copilot({ assessments }) {
             <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               Quantum Sentinel Copilot <Sparkles size={14} color="var(--accent-cyan)" />
             </h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Gemini-powered banking threat assistant</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Groq Llama 3.3-powered banking threat assistant</span>
           </div>
         </div>
 

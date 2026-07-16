@@ -1,15 +1,13 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-// Retrieve API key dynamically from environment
+// Retrieve Groq API key dynamically from environment or local storage
 const getApiKey = () => {
-  return import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('quantum_sentinel_gemini_key') || "";
+  return import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem('quantum_sentinel_groq_key') || "";
 };
 
 export function isAiActive() {
   return getApiKey().trim().length > 0;
 }
 
-// Function to call Gemini or generate simulation insights
+// Function to call our Express backend proxy for Groq AI Explanations
 export async function generateTransactionExplanation(assessment) {
   const apiKey = getApiKey();
   
@@ -19,47 +17,25 @@ export async function generateTransactionExplanation(assessment) {
   }
 
   try {
-    const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const response = await fetch('/api/generate-explanation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({ assessment })
+    });
 
-    const prompt = `
-      You are Quantum Sentinel AI, a leading cyber threat correlation engine for a tier-1 banking Security Operations Center (SOC).
-      Analyze the following correlated threat assessment and write a professional, detailed explainable AI explanation (approx. 150-200 words).
-      
-      Transaction Details:
-      - Transaction ID: ${assessment.transactionId}
-      - User: ${assessment.userName} (${assessment.userId})
-      - Role: ${assessment.userRole}
-      - Amount: ₹${parseFloat(assessment.amount).toLocaleString()}
-      - Timestamp: ${assessment.timestamp}
-      - Device: ${assessment.device}
-      - Location: ${assessment.country} (IP: ${assessment.ipAddress})
-      
-      UEBA Baseline Profile:
-      - Normal Device: ${assessment.profile.normalDevice}
-      - Normal IP: ${assessment.profile.normalIp}
-      - Normal Location: ${assessment.profile.normalLocation}
-      - Normal Avg Txn: ₹${assessment.profile.avgTransactionAmount}
-      - Normal Login Hours: ${assessment.profile.typicalLoginTime}
-      
-      Security Assessment:
-      - Risk Score: ${assessment.riskScore}%
-      - Risk Level: ${assessment.riskLevel}
-      - Threat Classification: ${assessment.threatClassification}
-      - Recommended SOC Action: ${assessment.recommendedAction}
-      - Triggered Indicators: ${JSON.stringify(assessment.indicators)}
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || `HTTP ${response.status}`);
+    }
 
-      Provide your analysis in clean Markdown containing:
-      1. **Threat Classification & Risk Summary**: Summarize what occurred and why the risk score is what it is.
-      2. **Correlated Indicators Breakdown**: Call out how the login activity and transaction data correlate (e.g. failed logins, device change, impossible travel).
-      3. **Recommended Actions**: Explain the reasoning for the recommended SOC action (e.g. Freeze Account vs MFA).
-    `;
-
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    const data = await response.json();
+    return data.explanation;
   } catch (error) {
-    console.error("Gemini API Error, falling back to Simulation Mode:", error);
-    return `**[Gemini API Connection Failed: ${error.message}]**\n\n*Please verify if your API key is correct. Reverting to simulated report analysis:*\n\n` + getMockExplanation(assessment);
+    console.error("Groq API Error, falling back to Simulation Mode:", error);
+    return `**[Groq API Connection Failed: ${error.message}]**\n\n*Please verify if your API key is correct. Reverting to simulated report analysis:*\n\n` + getMockExplanation(assessment);
   }
 }
 
@@ -134,7 +110,7 @@ Anomalous indicators detected for user **${userName}**:
 **SOC Action Recommendation**: ${recommendedAction}.`;
 }
 
-// Function to handle chatbot dialogue
+// Function to handle chatbot dialogue via Express Groq proxy
 export async function chatWithCopilot(userMessage, chatHistory = [], allAssessments = []) {
   const apiKey = getApiKey();
   
@@ -144,38 +120,25 @@ export async function chatWithCopilot(userMessage, chatHistory = [], allAssessme
   }
 
   try {
-    const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const response = await fetch('/api/copilot-chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({ userMessage, chatHistory, allAssessments })
+    });
 
-    // Build context summarizing existing high/medium risk transactions
-    const threatSummaries = allAssessments
-      .filter(t => t.riskScore > 30)
-      .map(t => `- TXN ID: ${t.transactionId}, User: ${t.userName}, Amount: ₹${t.amount}, Risk: ${t.riskScore}% (${t.threatClassification}), Device: ${t.device}, Location: ${t.country}`)
-      .join('\n');
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || `HTTP ${response.status}`);
+    }
 
-    const formattedHistory = chatHistory.map(h => 
-      `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.text}`
-    ).join('\n');
-
-    const prompt = `
-      You are Quantum Sentinel AI Security Copilot, a highly knowledgeable virtual security analyst assisting a bank's SOC team.
-      
-      Here is the current security dashboard context:
-      ${threatSummaries || "No active alerts or suspicious transactions at this time."}
-      
-      Conversation History:
-      ${formattedHistory}
-      
-      New User Message: ${userMessage}
-      
-      Provide a helpful, precise, and concise response using professional cybersecurity terminology (max 150 words). If the user asks about a specific transaction or user, look up its details in the context.
-    `;
-
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    const data = await response.json();
+    return data.reply;
   } catch (error) {
-    console.error("Gemini Copilot Error, using simulated response:", error);
-    return `**[Gemini API Connection Failed: ${error.message}]**\n\n*Copilot has temporarily reverted to Local Simulation Mode. Response:*\n\n` + getMockChatResponse(userMessage, allAssessments);
+    console.error("Groq Copilot Error, using simulated response:", error);
+    return `**[Groq API Connection Failed: ${error.message}]**\n\n*Copilot has temporarily reverted to Local Simulation Mode. Response:*\n\n` + getMockChatResponse(userMessage, allAssessments);
   }
 }
 
