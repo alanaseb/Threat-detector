@@ -20,7 +20,7 @@ export async function generateTransactionExplanation(assessment) {
 
   try {
     const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `
       You are Quantum Sentinel AI, a leading cyber threat correlation engine for a tier-1 banking Security Operations Center (SOC).
@@ -145,7 +145,7 @@ export async function chatWithCopilot(userMessage, chatHistory = [], allAssessme
 
   try {
     const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // Build context summarizing existing high/medium risk transactions
     const threatSummaries = allAssessments
