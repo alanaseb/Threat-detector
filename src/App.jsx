@@ -5,14 +5,13 @@ import Dashboard from './components/Dashboard';
 import TransactionList from './components/TransactionList';
 import TransactionDetail from './components/TransactionDetail';
 import Copilot from './components/Copilot';
-import UploadData from './components/UploadData';
 import ReportGenerator from './components/ReportGenerator';
 import BankLogo from './components/BankLogo';
 import { generateMockData, USER_PROFILES } from './utils/mockData';
 import { correlateAll } from './utils/threatEngine';
 import { isAiActive } from './utils/gemini';
 import { 
-  Shield, Activity, Bot, Upload, FileText, 
+  Shield, Activity, Bot, FileText, 
   Settings, Key, AlertCircle, X, ShieldCheck, MapPin, Grid
 } from 'lucide-react';
 
@@ -101,31 +100,6 @@ export default function App() {
 
     setActiveTab('dashboard');
     setPage('soc_portal');
-  };
-
-  const handleDataCorrelated = async (transactions, securityData) => {
-    // Keep reference of current parsed data
-    setAllRawData({ transactions, securityData });
-    
-    const correlated = correlateAll(transactions, securityData, userProfiles);
-    setAssessments(correlated);
-    if (correlated.length > 0) {
-      const sorted = [...correlated].sort((a, b) => b.riskScore - a.riskScore);
-      setSelectedTxnId(sorted[0].transactionId);
-    }
-
-    try {
-      await fetch('/api/ingest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactions, securityData })
-      });
-      const statusRes = await fetch('/api/db-status');
-      const statusData = await statusRes.json();
-      setDbStatus(statusData);
-    } catch (e) {
-      console.warn("Failed to synchronize ingested data with backend database: ", e);
-    }
   };
 
   const handleActionApplied = (txnId, actionName) => {
@@ -220,12 +194,7 @@ export default function App() {
             <Bot size={15} /> AI Copilot
           </button>
 
-          <button 
-            className={`nav-button ${activeTab === 'ingestion' ? 'active' : ''}`}
-            onClick={() => setActiveTab('ingestion')}
-          >
-            <Upload size={15} /> Ingest Data
-          </button>
+
 
           <button 
             className={`nav-button ${activeTab === 'reports' ? 'active' : ''}`}
@@ -400,10 +369,6 @@ export default function App() {
 
         {activeTab === 'copilot' && (
           <Copilot assessments={assessments} />
-        )}
-
-        {activeTab === 'ingestion' && (
-          <UploadData onDataCorrelated={handleDataCorrelated} />
         )}
 
         {activeTab === 'reports' && (
