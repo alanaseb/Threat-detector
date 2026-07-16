@@ -8,7 +8,7 @@ import Copilot from './components/Copilot';
 import UploadData from './components/UploadData';
 import ReportGenerator from './components/ReportGenerator';
 import BankLogo from './components/BankLogo';
-import { generateMockData } from './utils/mockData';
+import { generateMockData, USER_PROFILES } from './utils/mockData';
 import { correlateAll } from './utils/threatEngine';
 import { isAiActive } from './utils/gemini';
 import { 
@@ -23,6 +23,7 @@ export default function App() {
   const [allRawData, setAllRawData] = useState({ transactions: [], securityData: [] });
   const [assessments, setAssessments] = useState([]);
   const [selectedTxnId, setSelectedTxnId] = useState('');
+  const [userProfiles, setUserProfiles] = useState({});
   const [dbStatus, setDbStatus] = useState({ connected: false, database: "", error: "Checking status..." });
   
   // API Key state for local override
@@ -40,14 +41,25 @@ export default function App() {
 
         const tRes = await fetch('/api/transactions');
         const sRes = await fetch('/api/securityData');
+        const pRes = await fetch('/api/userProfiles');
+        
         const transactions = await tRes.json();
         const securityData = await sRes.json();
+        const profilesArray = await pRes.json();
+
+        // Convert profiles array to map
+        const profileMap = {};
+        profilesArray.forEach(p => {
+          profileMap[p.Customer_ID || p.userId] = p;
+        });
+        setUserProfiles(profileMap);
 
         setAllRawData({ transactions, securityData });
       } catch (err) {
         console.warn("Express backend server offline. Reverting to local frontend simulation mode:", err);
         const mock = generateMockData();
         setAllRawData(mock);
+        setUserProfiles(USER_PROFILES);
         setDbStatus({
           connected: false,
           database: "Local Memory",
@@ -76,7 +88,7 @@ export default function App() {
       finalSec = allRawData.securityData.filter(s => s.Transaction_ID !== 'TXN3005' && s.Transaction_ID !== 'TXN3010' && s.Transaction_ID !== 'TXN3015');
     }
 
-    const correlated = correlateAll(finalTxns, finalSec);
+    const correlated = correlateAll(finalTxns, finalSec, userProfiles);
     setAssessments(correlated);
 
     if (correlated.length > 0) {
@@ -95,7 +107,7 @@ export default function App() {
     // Keep reference of current parsed data
     setAllRawData({ transactions, securityData });
     
-    const correlated = correlateAll(transactions, securityData);
+    const correlated = correlateAll(transactions, securityData, userProfiles);
     setAssessments(correlated);
     if (correlated.length > 0) {
       const sorted = [...correlated].sort((a, b) => b.riskScore - a.riskScore);

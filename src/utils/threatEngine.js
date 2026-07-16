@@ -1,17 +1,18 @@
-import { USER_PROFILES } from './mockData';
+// Dynamic user profiles loaded from MongoDB
 
 // Dynamic score and explanation engine following your precise weights
-export function correlateTransaction(txn, sec, allTxns = []) {
+export function correlateTransaction(txn, sec, allTxns = [], userProfilesMap = {}) {
   const customerId = txn.Customer_ID || sec.Customer_ID;
-  const profile = USER_PROFILES[customerId] || {
-    userId: customerId,
-    name: txn.Account_Holder_Name || sec.Account_Holder_Name || "Bank Customer",
-    normalDevice: "Windows PC",
-    normalLocation: txn.Location || sec.Location || "Chennai",
-    accountNumber: txn.Account_Number || "Unknown",
-    ifsc: txn.IFSC_Code || "000",
-    accountType: txn.Account_Type || "Savings",
-    avgAmount: 2000
+  const profileRaw = userProfilesMap[customerId] || {};
+  const profile = {
+    userId: profileRaw.Customer_ID || profileRaw.userId || customerId,
+    name: profileRaw.Name || profileRaw.name || txn.Account_Holder_Name || sec.Account_Holder_Name || "Bank Customer",
+    normalDevice: profileRaw.Normal_Device || profileRaw.normalDevice || "Windows PC",
+    normalLocation: profileRaw.Normal_Location || profileRaw.normalLocation || txn.Location || sec.Location || "Chennai",
+    accountNumber: profileRaw.Account_Number || profileRaw.accountNumber || txn.Account_Number || "Unknown",
+    ifsc: profileRaw.IFSC_Code || profileRaw.ifsc || txn.IFSC_Code || "000",
+    accountType: profileRaw.Account_Type || profileRaw.accountType || txn.Account_Type || "Savings",
+    avgAmount: parseFloat(profileRaw.Avg_Amount || profileRaw.avgAmount || 2000)
   };
 
   const amountVal = parseFloat(txn.Transaction_Amount || 0);
@@ -186,7 +187,7 @@ export function correlateTransaction(txn, sec, allTxns = []) {
 }
 
 // Relational inner join by Transaction_ID
-export function correlateAll(transactions = [], securityData = []) {
+export function correlateAll(transactions = [], securityData = [], userProfilesMap = {}) {
   return transactions.map(txn => {
     const sec = securityData.find(s => s.Transaction_ID === txn.Transaction_ID) || {
       Customer_ID: txn.Customer_ID,
@@ -199,6 +200,6 @@ export function correlateAll(transactions = [], securityData = []) {
       Firewall_Alert: txn.Firewall_Alert || "No"
     };
 
-    return correlateTransaction(txn, sec, transactions);
+    return correlateTransaction(txn, sec, transactions, userProfilesMap);
   });
 }

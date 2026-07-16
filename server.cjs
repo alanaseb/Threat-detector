@@ -90,9 +90,20 @@ const SEED_SECURITY = [
   { Customer_ID: "U107", Transaction_ID: "TXN3031", Login_Date: "07-07-2026", Login_Time: "19:10", Location: "Chennai", Device_Information: "MacBook", VPN_Used: "No", Firewall_Alert: "No" }
 ];
 
+const SEED_PROFILES = [
+  { Customer_ID: "U101", Name: "Rahul Sharma", Normal_Device: "Windows PC", Normal_Location: "Coimbatore", Account_Number: "8778 9328 7921 7421", IFSC_Code: "651", Account_Type: "Savings", Avg_Amount: 2800.00 },
+  { Customer_ID: "U102", Name: "Priya Nair", Normal_Device: "Windows PC", Normal_Location: "Chennai", Account_Number: "9290 8100 3390 7579", IFSC_Code: "962", Account_Type: "Savings", Avg_Amount: 2300.00 },
+  { Customer_ID: "U103", Name: "Arun Kumar", Normal_Device: "iPhone", Normal_Location: "Chennai", Account_Number: "4701 7468 1453 8401", IFSC_Code: "676", Account_Type: "Savings", Avg_Amount: 1750.00 },
+  { Customer_ID: "U104", Name: "Sneha Reddy", Normal_Device: "Laptop", Normal_Location: "Chennai", Account_Number: "6100 3307 6661 9345", IFSC_Code: "189", Account_Type: "Current", Avg_Amount: 2600.00 },
+  { Customer_ID: "U105", Name: "Vikram Singh", Normal_Device: "Android", Normal_Location: "Coimbatore", Account_Number: "1231 0077 2837 8326", IFSC_Code: "759", Account_Type: "Current", Avg_Amount: 2400.00 },
+  { Customer_ID: "U106", Name: "Ananya Iyer", Normal_Device: "MacBook", Normal_Location: "Chennai", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Avg_Amount: 2600.00 },
+  { Customer_ID: "U107", Name: "Karthik Rajan", Normal_Device: "MacBook", Normal_Location: "Chennai", Account_Number: "9081 7263 5410 2938", IFSC_Code: "452", Account_Type: "Current", Avg_Amount: 2600.00 }
+];
+
 // Memory databases in case MongoDB remains blocked
 let memoryTransactions = [...SEED_TRANSACTIONS];
 let memorySecurityData = [...SEED_SECURITY];
+let memoryProfiles = [...SEED_PROFILES];
 
 // Connect to MongoDB Atlas
 async function connectToMongo() {
@@ -109,6 +120,7 @@ async function connectToMongo() {
     // Verify and seed collections
     const transactionsCol = db.collection("transactions");
     const securityCol = db.collection("security_data");
+    const profilesCol = db.collection("user_profiles");
 
     const tCount = await transactionsCol.countDocuments();
     if (tCount === 0) {
@@ -120,6 +132,12 @@ async function connectToMongo() {
     if (sCount === 0) {
       console.log("Seeding security telemetry logs...");
       await securityCol.insertMany(SEED_SECURITY);
+    }
+
+    const pCount = await profilesCol.countDocuments();
+    if (pCount === 0) {
+      console.log("Seeding user profile definitions...");
+      await profilesCol.insertMany(SEED_PROFILES);
     }
 
   } catch (err) {
@@ -165,6 +183,19 @@ app.get('/api/securityData', async (req, res) => {
     }
   }
   res.json(memorySecurityData);
+});
+
+// Endpoint for User Profiles
+app.get('/api/userProfiles', async (req, res) => {
+  if (dbConnected) {
+    try {
+      const data = await db.collection("user_profiles").find({}).toArray();
+      return res.json(data);
+    } catch (e) {
+      console.error("Error reading user profiles from MongoDB:", e);
+    }
+  }
+  res.json(memoryProfiles);
 });
 
 // Endpoint for Ingesting uploaded CSV datasets
